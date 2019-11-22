@@ -6,3 +6,5 @@ Currently there is a mixture of `new Material(...)` and `createShader(...)`.
 
 ## Shader Uniforms
 Create a system for managing shader uniform values from within `Material` objects.
+
+## Add Resizable Window Functionality

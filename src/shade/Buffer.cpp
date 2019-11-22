@@ -100,6 +100,9 @@ uint32_t Buffer::getElementCount()
 
 void Buffer::setData(void *data, uint32_t elementSize, uint32_t elementCount)
 {
+    // TODO: Optimise this so it doesn't free+alloc buffer when element count & 
+    //  size are the same as previous values.
+
     // Free old buffer data
     freeBuffer();
 
