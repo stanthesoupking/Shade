@@ -4,16 +4,20 @@
 
 using namespace Shade;
 
-Buffer::Buffer(VkPhysicalDevice physicalDevice, VkDevice device, void *data, uint32_t size)
+Buffer::Buffer(VkPhysicalDevice physicalDevice, VkDevice device, void *data, uint32_t elementSize, uint32_t elementCount)
 {
     this->physicalDevice = physicalDevice;
     this->device = device;
+
+    this->elementSize = elementSize;
+    this->elementCount = elementCount;
+    this->totalBufferSize = elementSize * elementCount;
 
     VkBufferCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     createInfo.pNext = nullptr;
     createInfo.flags = 0;
-    createInfo.size = size;
+    createInfo.size = totalBufferSize;
     createInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
@@ -44,7 +48,7 @@ Buffer::Buffer(VkPhysicalDevice physicalDevice, VkDevice device, void *data, uin
     // Fill buffer
     void * mappedData;
     vkMapMemory(device, bufferMemory, 0, createInfo.size, 0, &mappedData);
-    memcpy(mappedData, data, size);
+    memcpy(mappedData, data, totalBufferSize);
     vkUnmapMemory(device, bufferMemory);
 }
 
@@ -76,4 +80,9 @@ uint32_t Buffer::findMemoryType(uint32_t typeFilter,
 VkBuffer Buffer::_getVkBuffer()
 {
     return this->buffer;
+}
+
+uint32_t Buffer::getElementCount()
+{
+    return this->elementCount;
 }

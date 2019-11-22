@@ -124,7 +124,7 @@ public:
     
     void renderMesh(Buffer* indexBuffer, Buffer* vertexBuffer, Material* material);
 
-    Buffer *createBuffer(void *data, uint32_t size);
+    Buffer *createBuffer(void *data, uint32_t elementSize, uint32_t elementCount);
     Shader *createShaderFromSPIRVFile(ShaderLayout shaderLayout, const char *vertPath, const char *fragPath);
 };
 } // namespace Shade

@@ -26,14 +26,14 @@ void DemoApplication::init()
         {{0.5f, 0.5f}},
         {{-0.5f, 0.5f}}};
 
-    vertexBuffer = createBuffer(vertices.data(), sizeof(glm::vec2) * vertices.size());
+    vertexBuffer = createBuffer(vertices.data(), sizeof(glm::vec2), vertices.size());
 
     std::cout << "Creating index buffer..." << std::endl;
 
     std::vector<int> indices = {
         0, 1, 2};
 
-    indexBuffer = createBuffer(indices.data(), sizeof(int) * indices.size());
+    indexBuffer = createBuffer(indices.data(), sizeof(int), indices.size());
 
     std::cout << "Loading shader..." << std::endl;
 

@@ -748,14 +748,12 @@ void ShadeApplication::renderMesh(Buffer *indexBuffer, Buffer *vertexBuffer, Mat
     VkDeviceSize vertexBufferOffsets[] = {0};
     vkCmdBindVertexBuffers(commandBuffers[currentImageIndex], 0, 1, vertexBuffers, vertexBufferOffsets);
 
-    // NOTE: placeholder values
-    vkCmdDrawIndexed(commandBuffers[currentImageIndex], 3, 1, 0, 0, 0);
-    //vkCmdDraw(commandBuffers[currentImageIndex], 3, 1, 0, 0);
+    vkCmdDrawIndexed(commandBuffers[currentImageIndex], indexBuffer->getElementCount(), 1, 0, 0, 0);
 }
 
-Buffer *ShadeApplication::createBuffer(void *data, uint32_t size)
+Buffer *ShadeApplication::createBuffer(void *data, uint32_t elementSize, uint32_t elementCount)
 {
-    return new Buffer(physicalDevice, device, data, size);
+    return new Buffer(physicalDevice, device, data, elementSize, elementCount);
 }
 
 Shader *ShadeApplication::createShaderFromSPIRVFile(ShaderLayout shaderLayout, const char *vertPath, const char *fragPath)
