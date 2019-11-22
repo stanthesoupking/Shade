@@ -9,6 +9,36 @@ Buffer::Buffer(VkPhysicalDevice physicalDevice, VkDevice device, void *data, uin
     this->physicalDevice = physicalDevice;
     this->device = device;
 
+    createBuffer(data, elementSize, elementCount);
+}
+
+Buffer::~Buffer()
+{
+    vkDestroyBuffer(device, buffer, nullptr);
+    vkFreeMemory(device, bufferMemory, nullptr);
+}
+
+uint32_t Buffer::findMemoryType(uint32_t typeFilter,
+                                VkMemoryPropertyFlags properties)
+{
+    // Get available memory types
+    VkPhysicalDeviceMemoryProperties memProperties;
+    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+
+    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
+    {
+        if ((typeFilter & (1 << i)) &&
+            (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
+        {
+            return i;
+        }
+    }
+
+    throw std::runtime_error("Failed to find suitable memory type!");
+}
+
+void Buffer::createBuffer(void *data, uint32_t elementSize, uint32_t elementCount)
+{
     this->elementSize = elementSize;
     this->elementCount = elementCount;
     this->totalBufferSize = elementSize * elementCount;
@@ -46,35 +76,16 @@ Buffer::Buffer(VkPhysicalDevice physicalDevice, VkDevice device, void *data, uin
     vkBindBufferMemory(device, buffer, bufferMemory, 0);
 
     // Fill buffer
-    void * mappedData;
+    void *mappedData;
     vkMapMemory(device, bufferMemory, 0, createInfo.size, 0, &mappedData);
     memcpy(mappedData, data, totalBufferSize);
     vkUnmapMemory(device, bufferMemory);
 }
 
-Buffer::~Buffer()
+void Buffer::freeBuffer()
 {
     vkDestroyBuffer(device, buffer, nullptr);
     vkFreeMemory(device, bufferMemory, nullptr);
-}
-
-uint32_t Buffer::findMemoryType(uint32_t typeFilter,
-                                VkMemoryPropertyFlags properties)
-{
-    // Get available memory types
-    VkPhysicalDeviceMemoryProperties memProperties;
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
-
-    for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
-    {
-        if ((typeFilter & (1 << i)) &&
-            (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-        {
-            return i;
-        }
-    }
-
-    throw std::runtime_error("Failed to find suitable memory type!");
 }
 
 VkBuffer Buffer::_getVkBuffer()
@@ -85,4 +96,13 @@ VkBuffer Buffer::_getVkBuffer()
 uint32_t Buffer::getElementCount()
 {
     return this->elementCount;
+}
+
+void Buffer::setData(void *data, uint32_t elementSize, uint32_t elementCount)
+{
+    // Free old buffer data
+    freeBuffer();
+
+    // Set new data
+    createBuffer(data, elementSize, elementCount);
 }

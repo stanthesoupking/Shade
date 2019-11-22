@@ -21,6 +21,8 @@ private:
     uint32_t findMemoryType(uint32_t typeFilter,
                             VkMemoryPropertyFlags properties);
 
+    void createBuffer(void *data, uint32_t elementSize, uint32_t elementCount);
+    void freeBuffer();
 public:
     Buffer(VkPhysicalDevice physicalDevice, VkDevice device, void *data, uint32_t elementSize, uint32_t elementCount);
     ~Buffer();
@@ -28,5 +30,7 @@ public:
     VkBuffer _getVkBuffer();
 
     uint32_t getElementCount();
+
+    void setData(void *data, uint32_t elementSize, uint32_t elementCount);
 };
 } // namespace Shade
