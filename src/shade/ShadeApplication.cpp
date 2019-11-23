@@ -13,25 +13,32 @@ ShadeApplication::ShadeApplication()
 ShadeApplication::~ShadeApplication()
 {
     // Clean up internal variables
-    vkDestroyCommandPool(device, commandPool, nullptr);
+    vkDestroyDescriptorPool(vulkanData.device, vulkanData.descriptorPool, nullptr);
 
-    for (auto framebuffer : swapChainFramebuffers)
+    vkDestroySemaphore(vulkanData.device, vulkanData.imageAvailableSemaphore, nullptr);
+    vkDestroySemaphore(vulkanData.device, vulkanData.renderFinishedSemaphore, nullptr);
+
+    vkDestroyRenderPass(vulkanData.device, vulkanData.renderPass, nullptr);
+
+    vkDestroyCommandPool(vulkanData.device, vulkanData.commandPool, nullptr);
+
+    for (auto framebuffer : vulkanData.swapChainFramebuffers)
     {
-        vkDestroyFramebuffer(device, framebuffer, nullptr);
+        vkDestroyFramebuffer(vulkanData.device, framebuffer, nullptr);
     }
 
-    for (auto imageView : swapChainImageViews)
+    for (auto imageView : vulkanData.swapChainImageViews)
     {
-        vkDestroyImageView(device, imageView, nullptr);
+        vkDestroyImageView(vulkanData.device, imageView, nullptr);
     }
 
-    vkDestroySwapchainKHR(device, swapChain, nullptr);
+    vkDestroySwapchainKHR(vulkanData.device, vulkanData.swapChain, nullptr);
 
-    vkDestroyDevice(device, nullptr);
+    vkDestroyDevice(vulkanData.device, nullptr);
 
-    vkDestroySurfaceKHR(instance, surface, nullptr);
+    vkDestroySurfaceKHR(vulkanData.instance, vulkanData.surface, nullptr);
 
-    vkDestroyInstance(instance, nullptr);
+    vkDestroyInstance(vulkanData.instance, nullptr);
 
     glfwDestroyWindow(window);
 
@@ -62,7 +69,7 @@ void ShadeApplication::start()
     }
 
     // Wait until all operations on GPU are complete
-    vkDeviceWaitIdle(device);
+    vkDeviceWaitIdle(vulkanData.device);
 
     this->destroy();
 }
@@ -95,6 +102,7 @@ void ShadeApplication::initVulkan()
     createSemaphores();
     createCommandPool();
     createCommandBuffers();
+    createDescriptorPool();
 }
 
 void ShadeApplication::createInstance()
@@ -135,7 +143,7 @@ void ShadeApplication::createInstance()
         createInfo.enabledLayerCount = 0;
     }
 
-    if (vkCreateInstance(&createInfo, nullptr, &instance) != VK_SUCCESS)
+    if (vkCreateInstance(&createInfo, nullptr, &vulkanData.instance) != VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to create instance!");
     }
@@ -143,7 +151,7 @@ void ShadeApplication::createInstance()
 
 void ShadeApplication::createSurface()
 {
-    if (glfwCreateWindowSurface(instance, window, nullptr, &surface) != VK_SUCCESS)
+    if (glfwCreateWindowSurface(vulkanData.instance, window, nullptr, &vulkanData.surface) != VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to create window surface!");
     }
@@ -151,10 +159,10 @@ void ShadeApplication::createSurface()
 
 void ShadeApplication::pickPhysicalDevice()
 {
-    physicalDevice = VK_NULL_HANDLE;
+    vulkanData.physicalDevice = VK_NULL_HANDLE;
 
     uint32_t physicalDeviceCount;
-    vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, nullptr);
+    vkEnumeratePhysicalDevices(vulkanData.instance, &physicalDeviceCount, nullptr);
 
     if (physicalDeviceCount == 0)
     {
@@ -164,18 +172,18 @@ void ShadeApplication::pickPhysicalDevice()
 
     std::vector<VkPhysicalDevice> physicalDevices;
     physicalDevices.resize(physicalDeviceCount);
-    vkEnumeratePhysicalDevices(instance, &physicalDeviceCount, physicalDevices.data());
+    vkEnumeratePhysicalDevices(vulkanData.instance, &physicalDeviceCount, physicalDevices.data());
 
     for (const VkPhysicalDevice tDevice : physicalDevices)
     {
         if (isDeviceSuitable(tDevice))
         {
-            this->physicalDevice = tDevice;
+            vulkanData.physicalDevice = tDevice;
             break;
         }
     }
 
-    if (physicalDevice == VK_NULL_HANDLE)
+    if (vulkanData.physicalDevice == VK_NULL_HANDLE)
     {
         throw std::runtime_error("Shade: Failed to find a suitable GPU!");
     }
@@ -229,7 +237,7 @@ QueueFamilyIndices ShadeApplication::findQueueFamilies(VkPhysicalDevice device)
         }
 
         VkBool32 queuePresentSupport = false;
-        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, surface, &queuePresentSupport);
+        vkGetPhysicalDeviceSurfaceSupportKHR(device, i, vulkanData.surface, &queuePresentSupport);
 
         if (queuePresentSupport)
         {
@@ -270,28 +278,28 @@ SwapChainSupportDetails ShadeApplication::querySwapChainSupport(VkPhysicalDevice
 {
     SwapChainSupportDetails details;
 
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, surface,
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, vulkanData.surface,
                                               &details.capabilities);
 
     uint32_t formatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, vulkanData.surface, &formatCount,
                                          nullptr);
 
     if (formatCount != 0)
     {
         details.formats.resize(formatCount);
-        vkGetPhysicalDeviceSurfaceFormatsKHR(device, surface, &formatCount,
+        vkGetPhysicalDeviceSurfaceFormatsKHR(device, vulkanData.surface, &formatCount,
                                              details.formats.data());
     }
 
     uint32_t presentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, vulkanData.surface,
                                               &presentModeCount, nullptr);
 
     if (presentModeCount != 0)
     {
         details.presentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, surface,
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, vulkanData.surface,
                                                   &presentModeCount, details.presentModes.data());
     }
 
@@ -309,7 +317,7 @@ void ShadeApplication::createLogicalDevice()
     createInfo.flags = 0;
 
     // Get queue create infos
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = findQueueFamilies(vulkanData.physicalDevice);
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
@@ -351,18 +359,18 @@ void ShadeApplication::createLogicalDevice()
         createInfo.enabledLayerCount = 0;
     }
 
-    if (vkCreateDevice(physicalDevice, &createInfo, nullptr, &device) != VK_SUCCESS)
+    if (vkCreateDevice(vulkanData.physicalDevice, &createInfo, nullptr, &vulkanData.device) != VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to create logical device!");
     }
 
-    vkGetDeviceQueue(device, indices.graphicsQueue.value(), 0, &graphicsQueue);
-    vkGetDeviceQueue(device, indices.presentQueue.value(), 0, &presentQueue);
+    vkGetDeviceQueue(vulkanData.device, indices.graphicsQueue.value(), 0, &vulkanData.graphicsQueue);
+    vkGetDeviceQueue(vulkanData.device, indices.presentQueue.value(), 0, &vulkanData.presentQueue);
 }
 
 void ShadeApplication::createSwapchain()
 {
-    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(physicalDevice);
+    SwapChainSupportDetails swapChainSupport = querySwapChainSupport(vulkanData.physicalDevice);
 
     uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 
@@ -385,7 +393,7 @@ void ShadeApplication::createSwapchain()
     createInfo.sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR;
     createInfo.pNext = nullptr;
     createInfo.flags = 0;
-    createInfo.surface = surface;
+    createInfo.surface = vulkanData.surface;
     createInfo.minImageCount = imageCount;
     createInfo.imageFormat = surfaceFormat.format;
     createInfo.imageColorSpace = surfaceFormat.colorSpace;
@@ -393,7 +401,7 @@ void ShadeApplication::createSwapchain()
     createInfo.imageArrayLayers = 1;
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
-    QueueFamilyIndices indices = findQueueFamilies(physicalDevice);
+    QueueFamilyIndices indices = findQueueFamilies(vulkanData.physicalDevice);
     uint32_t queueFamilyIndices[] = {indices.graphicsQueue.value(),
                                      indices.presentQueue.value()};
 
@@ -416,18 +424,18 @@ void ShadeApplication::createSwapchain()
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    if (vkCreateSwapchainKHR(device, &createInfo, nullptr, &swapChain) != VK_SUCCESS)
+    if (vkCreateSwapchainKHR(vulkanData.device, &createInfo, nullptr, &vulkanData.swapChain) != VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to create swap chain!");
     }
 
     // Get swapchain images
-    vkGetSwapchainImagesKHR(device, swapChain, &imageCount, nullptr);
-    swapChainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(device, swapChain, &imageCount, swapChainImages.data());
+    vkGetSwapchainImagesKHR(vulkanData.device, vulkanData.swapChain, &imageCount, nullptr);
+    vulkanData.swapChainImages.resize(imageCount);
+    vkGetSwapchainImagesKHR(vulkanData.device, vulkanData.swapChain, &imageCount, vulkanData.swapChainImages.data());
 
-    swapChainImageFormat = surfaceFormat.format;
-    swapChainExtent = imageExtent;
+    vulkanData.swapChainImageFormat = surfaceFormat.format;
+    vulkanData.swapChainExtent = imageExtent;
 }
 
 VkExtent2D ShadeApplication::getOptimalSwapExtent(const VkSurfaceCapabilitiesKHR &
@@ -488,15 +496,15 @@ VkSurfaceFormatKHR ShadeApplication::getOptimalSwapSurfaceFormat(const std::vect
 
 void ShadeApplication::createImageViews()
 {
-    swapChainImageViews.resize(swapChainImages.size());
+    vulkanData.swapChainImageViews.resize(vulkanData.swapChainImages.size());
 
-    for (size_t i = 0; i < swapChainImages.size(); i++)
+    for (size_t i = 0; i < vulkanData.swapChainImages.size(); i++)
     {
         VkImageViewCreateInfo createInfo = {};
         createInfo.sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO;
-        createInfo.image = swapChainImages[i];
+        createInfo.image = vulkanData.swapChainImages[i];
         createInfo.viewType = VK_IMAGE_VIEW_TYPE_2D;
-        createInfo.format = swapChainImageFormat;
+        createInfo.format = vulkanData.swapChainImageFormat;
 
         createInfo.components.r = VK_COMPONENT_SWIZZLE_IDENTITY;
         createInfo.components.g = VK_COMPONENT_SWIZZLE_IDENTITY;
@@ -509,8 +517,8 @@ void ShadeApplication::createImageViews()
         createInfo.subresourceRange.baseArrayLayer = 0;
         createInfo.subresourceRange.layerCount = 1;
 
-        if (vkCreateImageView(device, &createInfo, nullptr,
-                              &swapChainImageViews[i]) != VK_SUCCESS)
+        if (vkCreateImageView(vulkanData.device, &createInfo, nullptr,
+                              &vulkanData.swapChainImageViews[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("Shade: Failed to create image views!");
         }
@@ -520,7 +528,7 @@ void ShadeApplication::createImageViews()
 void ShadeApplication::createRenderPass()
 {
     VkAttachmentDescription colorAttachment = {};
-    colorAttachment.format = swapChainImageFormat;
+    colorAttachment.format = vulkanData.swapChainImageFormat;
     colorAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
     colorAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
     colorAttachment.storeOp = VK_ATTACHMENT_STORE_OP_STORE;
@@ -559,8 +567,8 @@ void ShadeApplication::createRenderPass()
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    if (vkCreateRenderPass(device, &renderPassInfo, nullptr,
-                           &renderPass) != VK_SUCCESS)
+    if (vkCreateRenderPass(vulkanData.device, &renderPassInfo, nullptr,
+                           &vulkanData.renderPass) != VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to create render pass!");
     }
@@ -568,24 +576,24 @@ void ShadeApplication::createRenderPass()
 
 void ShadeApplication::createFramebuffers()
 {
-    swapChainFramebuffers.resize(swapChainImageViews.size());
+    vulkanData.swapChainFramebuffers.resize(vulkanData.swapChainImageViews.size());
 
-    for (size_t i = 0; i < swapChainImageViews.size(); i++)
+    for (size_t i = 0; i < vulkanData.swapChainImageViews.size(); i++)
     {
-        VkImageView attachments[] = {swapChainImageViews[i]};
+        VkImageView attachments[] = {vulkanData.swapChainImageViews[i]};
 
         VkFramebufferCreateInfo framebufferInfo = {};
         framebufferInfo.sType =
             VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
-        framebufferInfo.renderPass = renderPass;
+        framebufferInfo.renderPass = vulkanData.renderPass;
         framebufferInfo.attachmentCount = 1;
         framebufferInfo.pAttachments = attachments;
-        framebufferInfo.width = swapChainExtent.width;
-        framebufferInfo.height = swapChainExtent.height;
+        framebufferInfo.width = vulkanData.swapChainExtent.width;
+        framebufferInfo.height = vulkanData.swapChainExtent.height;
         framebufferInfo.layers = 1;
 
-        if (vkCreateFramebuffer(device, &framebufferInfo, nullptr,
-                                &swapChainFramebuffers[i]) != VK_SUCCESS)
+        if (vkCreateFramebuffer(vulkanData.device, &framebufferInfo, nullptr,
+                                &vulkanData.swapChainFramebuffers[i]) != VK_SUCCESS)
         {
             throw std::runtime_error("Shade: Failed to create framebuffer!");
         }
@@ -597,10 +605,10 @@ void ShadeApplication::createSemaphores()
     VkSemaphoreCreateInfo semaphoreInfo = {};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    if (vkCreateSemaphore(device, &semaphoreInfo,
-                          nullptr, &imageAvailableSemaphore) != VK_SUCCESS |
-        vkCreateSemaphore(device, &semaphoreInfo,
-                          nullptr, &renderFinishedSemaphore) != VK_SUCCESS)
+    if (vkCreateSemaphore(vulkanData.device, &semaphoreInfo,
+                          nullptr, &vulkanData.imageAvailableSemaphore) != VK_SUCCESS |
+        vkCreateSemaphore(vulkanData.device, &semaphoreInfo,
+                          nullptr, &vulkanData.renderFinishedSemaphore) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create semaphores!");
     }
@@ -609,16 +617,16 @@ void ShadeApplication::createSemaphores()
 void ShadeApplication::createCommandPool()
 {
     QueueFamilyIndices queueFamilyIndices =
-        findQueueFamilies(physicalDevice);
+        findQueueFamilies(vulkanData.physicalDevice);
 
     VkCommandPoolCreateInfo poolInfo = {};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
     poolInfo.queueFamilyIndex =
         queueFamilyIndices.graphicsQueue.value();
-    poolInfo.flags = 0;
+    poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    if (vkCreateCommandPool(device, &poolInfo, nullptr,
-                            &commandPool) != VK_SUCCESS)
+    if (vkCreateCommandPool(vulkanData.device, &poolInfo, nullptr,
+                            &vulkanData.commandPool) != VK_SUCCESS)
     {
         throw std::runtime_error("Failed to create command pool!");
     }
@@ -626,29 +634,45 @@ void ShadeApplication::createCommandPool()
 
 void ShadeApplication::createCommandBuffers()
 {
-    commandBuffers.resize(swapChainFramebuffers.size());
+    vulkanData.commandBuffers.resize(vulkanData.swapChainFramebuffers.size());
 
     VkCommandBufferAllocateInfo allocInfo = {};
     allocInfo.sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO;
-    allocInfo.commandPool = commandPool;
+    allocInfo.commandPool = vulkanData.commandPool;
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
-    allocInfo.commandBufferCount = (uint32_t)commandBuffers.size();
+    allocInfo.commandBufferCount = (uint32_t)vulkanData.commandBuffers.size();
 
-    if (vkAllocateCommandBuffers(device, &allocInfo,
-                                 commandBuffers.data()) != VK_SUCCESS)
+    if (vkAllocateCommandBuffers(vulkanData.device, &allocInfo,
+                                 vulkanData.commandBuffers.data()) != VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to allocate command buffers!");
     }
 }
 
+void ShadeApplication::createDescriptorPool()
+{
+    VkDescriptorPoolSize poolSizes[] = {
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1024}};
+
+    VkDescriptorPoolCreateInfo createInfo = {};
+    createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
+    createInfo.pNext = nullptr;
+    createInfo.flags = 0;
+    createInfo.maxSets = 1024; // PLACEHOLDER VALUE, should probs use device limits
+    createInfo.poolSizeCount = 1;
+    createInfo.pPoolSizes = poolSizes;
+
+    vkCreateDescriptorPool(vulkanData.device, &createInfo, nullptr, &vulkanData.descriptorPool);
+}
+
 void ShadeApplication::renderStart()
 {
     // Get current image index
-    vkAcquireNextImageKHR(device, swapChain, UINT64_MAX, imageAvailableSemaphore,
-                          nullptr, &currentImageIndex);
+    vkAcquireNextImageKHR(vulkanData.device, vulkanData.swapChain, UINT64_MAX, vulkanData.imageAvailableSemaphore,
+                          nullptr, &vulkanData.currentImageIndex);
 
     // Reset command buffer
-    vkResetCommandBuffer(commandBuffers[currentImageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+    vkResetCommandBuffer(vulkanData.commandBuffers[vulkanData.currentImageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
     // Begin recording command buffer
     VkCommandBufferBeginInfo beginInfo = {};
@@ -656,7 +680,7 @@ void ShadeApplication::renderStart()
     beginInfo.flags = 0;
     beginInfo.pInheritanceInfo = nullptr;
 
-    if (vkBeginCommandBuffer(commandBuffers[currentImageIndex],
+    if (vkBeginCommandBuffer(vulkanData.commandBuffers[vulkanData.currentImageIndex],
                              &beginInfo) != VK_SUCCESS)
     {
         throw std::runtime_error(
@@ -665,26 +689,26 @@ void ShadeApplication::renderStart()
 
     VkRenderPassBeginInfo renderPassInfo = {};
     renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_BEGIN_INFO;
-    renderPassInfo.renderPass = renderPass;
-    renderPassInfo.framebuffer = swapChainFramebuffers[currentImageIndex];
+    renderPassInfo.renderPass = vulkanData.renderPass;
+    renderPassInfo.framebuffer = vulkanData.swapChainFramebuffers[vulkanData.currentImageIndex];
     renderPassInfo.renderArea.offset = {0, 0};
-    renderPassInfo.renderArea.extent = swapChainExtent;
+    renderPassInfo.renderArea.extent = vulkanData.swapChainExtent;
 
     VkClearValue clearColor = {info.clearColour.r, info.clearColour.g, info.clearColour.b, info.clearColour.a};
     renderPassInfo.clearValueCount = 1;
     renderPassInfo.pClearValues = &clearColor;
 
     // Begin render pass
-    vkCmdBeginRenderPass(commandBuffers[currentImageIndex], &renderPassInfo,
+    vkCmdBeginRenderPass(vulkanData.commandBuffers[vulkanData.currentImageIndex], &renderPassInfo,
                          VK_SUBPASS_CONTENTS_INLINE);
 }
 
 void ShadeApplication::renderPresent()
 {
     // End render pass
-    vkCmdEndRenderPass(commandBuffers[currentImageIndex]);
+    vkCmdEndRenderPass(vulkanData.commandBuffers[vulkanData.currentImageIndex]);
 
-    if (vkEndCommandBuffer(commandBuffers[currentImageIndex]) != VK_SUCCESS)
+    if (vkEndCommandBuffer(vulkanData.commandBuffers[vulkanData.currentImageIndex]) != VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to record command buffer!");
     }
@@ -692,20 +716,20 @@ void ShadeApplication::renderPresent()
     VkSubmitInfo submitInfo = {};
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
-    VkSemaphore waitSemaphores[] = {imageAvailableSemaphore};
+    VkSemaphore waitSemaphores[] = {vulkanData.imageAvailableSemaphore};
     VkPipelineStageFlags waitStages[] =
         {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
     submitInfo.commandBufferCount = 1;
-    submitInfo.pCommandBuffers = &commandBuffers[currentImageIndex];
+    submitInfo.pCommandBuffers = &vulkanData.commandBuffers[vulkanData.currentImageIndex];
 
-    VkSemaphore signalSemaphores[] = {renderFinishedSemaphore};
+    VkSemaphore signalSemaphores[] = {vulkanData.renderFinishedSemaphore};
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    if (vkQueueSubmit(graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) !=
+    if (vkQueueSubmit(vulkanData.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) !=
         VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to submit draw command buffer!");
@@ -717,18 +741,18 @@ void ShadeApplication::renderPresent()
     presentInfo.waitSemaphoreCount = 1;
     presentInfo.pWaitSemaphores = signalSemaphores;
 
-    VkSwapchainKHR swapChains[] = {swapChain};
+    VkSwapchainKHR swapChains[] = {vulkanData.swapChain};
     presentInfo.swapchainCount = 1;
     presentInfo.pSwapchains = swapChains;
-    presentInfo.pImageIndices = &currentImageIndex;
+    presentInfo.pImageIndices = &vulkanData.currentImageIndex;
     presentInfo.pResults = nullptr;
 
-    vkQueuePresentKHR(presentQueue, &presentInfo);
+    vkQueuePresentKHR(vulkanData.presentQueue, &presentInfo);
 
     // Prevent CPU from submitting work faster than GPU
     //  can keep up with.
     // Wait for present operations to be finished.
-    vkQueueWaitIdle(presentQueue);
+    vkQueueWaitIdle(vulkanData.presentQueue);
 }
 
 void ShadeApplication::setRenderClearColour(Colour c)
@@ -739,25 +763,21 @@ void ShadeApplication::setRenderClearColour(Colour c)
 void ShadeApplication::renderMesh(Buffer *indexBuffer, Buffer *vertexBuffer, Material *material)
 {
     // Bind shader graphics pipeline
-    vkCmdBindPipeline(commandBuffers[currentImageIndex],
+    vkCmdBindPipeline(vulkanData.commandBuffers[vulkanData.currentImageIndex],
                       VK_PIPELINE_BIND_POINT_GRAPHICS, material->getShader()->_getGraphicsPipeline());
 
-    vkCmdBindIndexBuffer(commandBuffers[currentImageIndex], indexBuffer->_getVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindIndexBuffer(vulkanData.commandBuffers[vulkanData.currentImageIndex], indexBuffer->_getVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
 
     VkBuffer vertexBuffers[] = {vertexBuffer->_getVkBuffer()};
     VkDeviceSize vertexBufferOffsets[] = {0};
-    vkCmdBindVertexBuffers(commandBuffers[currentImageIndex], 0, 1, vertexBuffers, vertexBufferOffsets);
+    vkCmdBindVertexBuffers(vulkanData.commandBuffers[vulkanData.currentImageIndex], 0, 1, vertexBuffers, vertexBufferOffsets);
 
-    vkCmdDrawIndexed(commandBuffers[currentImageIndex], indexBuffer->getElementCount(), 1, 0, 0, 0);
-}
+    VkDescriptorSet descriptorSets[] = {
+        material->_getDescriptorSet()};
 
-Buffer *ShadeApplication::createBuffer(void *data, uint32_t elementSize, uint32_t elementCount)
-{
-    return new Buffer(physicalDevice, device, data, elementSize, elementCount);
-}
+    vkCmdBindDescriptorSets(vulkanData.commandBuffers[vulkanData.currentImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
+                            material->getShader()->_getGraphicsPipelineLayout(),
+                            0, 1, descriptorSets, 0, nullptr);
 
-Shader *ShadeApplication::createShaderFromSPIRVFile(ShaderLayout shaderLayout, const char *vertPath, const char *fragPath)
-{
-    return Shader::FromSPIRVFile(
-        device, swapChainExtent, renderPass, shaderLayout, vertPath, fragPath);
+    vkCmdDrawIndexed(vulkanData.commandBuffers[vulkanData.currentImageIndex], indexBuffer->getElementCount(), 1, 0, 0, 0);
 }

@@ -9,7 +9,7 @@ set (CMAKE_CXX_STANDARD 17)
 include_directories(include)
 
 # Get GLFW3
-find_package(glfw3 3.3 REQUIRED)
+find_package(glfw3 3.3)
 
 # Check if library was found
 if(NOT glfw3_FOUND)
@@ -31,7 +31,7 @@ endif()
 FetchContent_Declare(
 	glm
 	GIT_REPOSITORY https://github.com/g-truc/glm
-	GIT_TAG 0.9.9.6
+	
 )
 
 set(GLM_TEST_ENABLE OFF CACHE BOOL "" FORCE)
@@ -79,4 +79,4 @@ file(GLOB ShadeApp_INC
 #FetchContent_MakeAvailable(shaderc)
 
 add_executable(ShadeApp ${ShadeApp_SRC} ${ShadeApp_INC})
-target_link_libraries(ShadeApp glfw Vulkan::Vulkan)
+target_link_libraries(ShadeApp glfw glm Vulkan::Vulkan)

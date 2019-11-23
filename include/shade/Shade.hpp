@@ -13,6 +13,7 @@
 #include "./Colour.hpp"
 #include "./Rect.hpp"
 #include "./Buffer.hpp"
+#include "./IndexBuffer.hpp"
 #include "./Shader.hpp"
 #include "./Material.hpp"
 #include "./ShadeApplication.hpp"

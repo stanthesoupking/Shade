@@ -4,18 +4,18 @@
 
 using namespace Shade;
 
-Buffer::Buffer(VkPhysicalDevice physicalDevice, VkDevice device, void *data, uint32_t elementSize, uint32_t elementCount)
+Buffer::Buffer(VulkanApplication* app, void *data, uint32_t elementSize, uint32_t elementCount, BufferType bufferType)
 {
-    this->physicalDevice = physicalDevice;
-    this->device = device;
+    this->vulkanData = app->_getVulkanData();
+    this->bufferType = bufferType;
 
     createBuffer(data, elementSize, elementCount);
 }
 
 Buffer::~Buffer()
 {
-    vkDestroyBuffer(device, buffer, nullptr);
-    vkFreeMemory(device, bufferMemory, nullptr);
+    vkDestroyBuffer(vulkanData->device, buffer, nullptr);
+    vkFreeMemory(vulkanData->device, bufferMemory, nullptr);
 }
 
 uint32_t Buffer::findMemoryType(uint32_t typeFilter,
@@ -23,7 +23,7 @@ uint32_t Buffer::findMemoryType(uint32_t typeFilter,
 {
     // Get available memory types
     VkPhysicalDeviceMemoryProperties memProperties;
-    vkGetPhysicalDeviceMemoryProperties(physicalDevice, &memProperties);
+    vkGetPhysicalDeviceMemoryProperties(vulkanData->physicalDevice, &memProperties);
 
     for (uint32_t i = 0; i < memProperties.memoryTypeCount; i++)
     {
@@ -48,16 +48,29 @@ void Buffer::createBuffer(void *data, uint32_t elementSize, uint32_t elementCoun
     createInfo.pNext = nullptr;
     createInfo.flags = 0;
     createInfo.size = totalBufferSize;
-    createInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+
+    if (bufferType == VERTEX)
+    {
+        createInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+    }
+    else if (bufferType == INDEX)
+    {
+        createInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+    }
+    else if (bufferType == UNIFORM)
+    {
+        createInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+    }
+
     createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateBuffer(device, &createInfo, nullptr, &buffer) != VK_SUCCESS)
+    if (vkCreateBuffer(vulkanData->device, &createInfo, nullptr, &buffer) != VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to create buffer!");
     }
 
     VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(device, buffer, &memRequirements);
+    vkGetBufferMemoryRequirements(vulkanData->device, buffer, &memRequirements);
 
     // Allocate buffer memory
     VkMemoryAllocateInfo allocInfo = {};
@@ -67,25 +80,25 @@ void Buffer::createBuffer(void *data, uint32_t elementSize, uint32_t elementCoun
                                                VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
     allocInfo.allocationSize = memRequirements.size;
 
-    if (vkAllocateMemory(device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
+    if (vkAllocateMemory(vulkanData->device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to allocate buffer!");
     }
 
     // Bind allocated memory to buffer
-    vkBindBufferMemory(device, buffer, bufferMemory, 0);
+    vkBindBufferMemory(vulkanData->device, buffer, bufferMemory, 0);
 
     // Fill buffer
     void *mappedData;
-    vkMapMemory(device, bufferMemory, 0, createInfo.size, 0, &mappedData);
+    vkMapMemory(vulkanData->device, bufferMemory, 0, createInfo.size, 0, &mappedData);
     memcpy(mappedData, data, totalBufferSize);
-    vkUnmapMemory(device, bufferMemory);
+    vkUnmapMemory(vulkanData->device, bufferMemory);
 }
 
 void Buffer::freeBuffer()
 {
-    vkDestroyBuffer(device, buffer, nullptr);
-    vkFreeMemory(device, bufferMemory, nullptr);
+    vkDestroyBuffer(vulkanData->device, buffer, nullptr);
+    vkFreeMemory(vulkanData->device, bufferMemory, nullptr);
 }
 
 VkBuffer Buffer::_getVkBuffer()
@@ -98,9 +111,14 @@ uint32_t Buffer::getElementCount()
     return this->elementCount;
 }
 
+uint32_t Buffer::getTotalSize()
+{
+    return this->totalBufferSize;
+}
+
 void Buffer::setData(void *data, uint32_t elementSize, uint32_t elementCount)
 {
-    // TODO: Optimise this so it doesn't free+alloc buffer when element count & 
+    // TODO: Optimise this so it doesn't free+alloc buffer when element count &
     //  size are the same as previous values.
 
     // Free old buffer data

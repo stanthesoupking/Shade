@@ -8,6 +8,10 @@
 #include <vector>
 #include <optional>
 
+#include "./VulkanApplication.hpp"
+#include "./Buffer.hpp"
+#include "./Rect.hpp"
+#include "./Colour.hpp"
 #include "./Shade.hpp"
 
 namespace Shade
@@ -36,7 +40,7 @@ struct SwapChainSupportDetails
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-class ShadeApplication
+class ShadeApplication: public VulkanApplication
 {
 private:
     ShadeApplicationInfo info;
@@ -48,34 +52,6 @@ private:
 
     const std::vector<const char *> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME};
-
-    VkInstance instance;
-    VkPhysicalDevice physicalDevice;
-    VkDevice device;
-    VkQueue graphicsQueue;
-    VkQueue presentQueue;
-    VkSurfaceKHR surface;
-
-    VkSwapchainKHR swapChain;
-    std::vector<VkImage> swapChainImages;
-    VkFormat swapChainImageFormat;
-    VkExtent2D swapChainExtent;
-    std::vector<VkImageView> swapChainImageViews;
-    std::vector<VkFramebuffer> swapChainFramebuffers;
-
-    VkRenderPass renderPass;
-    VkPipelineLayout pipelineLayout;
-    VkPipeline graphicsPipeline;
-
-    VkCommandPool commandPool;
-    std::vector<VkCommandBuffer> commandBuffers;
-
-    VkSemaphore imageAvailableSemaphore;
-    VkSemaphore renderFinishedSemaphore;
-
-    // Current image being rendered to
-    uint32_t currentImageIndex;
-    VkCommandBuffer currentCommandBuffer;
 
     void initSystem();
     void initWindow();
@@ -102,6 +78,7 @@ private:
     void createSemaphores();
     void createCommandPool();
     void createCommandBuffers();
+    void createDescriptorPool();
 
     void renderStart();
     void renderPresent();
@@ -121,10 +98,7 @@ public:
     virtual void destroy() = 0;
 
     void setRenderClearColour(Colour c);
-    
-    void renderMesh(Buffer* indexBuffer, Buffer* vertexBuffer, Material* material);
 
-    Buffer *createBuffer(void *data, uint32_t elementSize, uint32_t elementCount);
-    Shader *createShaderFromSPIRVFile(ShaderLayout shaderLayout, const char *vertPath, const char *fragPath);
+    void renderMesh(Buffer *indexBuffer, Buffer *vertexBuffer, Material *material);
 };
 } // namespace Shade

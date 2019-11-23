@@ -4,54 +4,63 @@
 
 #include <vulkan/vulkan.h>
 
+#include "./VulkanApplication.hpp"
+
 namespace Shade
 {
 enum ShaderVariableType
 {
-    FLOAT,
-    INT,
-    VEC2
+	FLOAT,
+	INT,
+	VEC2,
+	VEC3,
+	VEC4
 };
 
 class ShaderLayout
 {
 private:
-    std::vector<ShaderVariableType> layout;
+	std::vector<ShaderVariableType> layout;
 
-    uint32_t getShaderVariableTypeSize(ShaderVariableType type);
-    VkFormat getShaderVariableTypeFormat(ShaderVariableType type);
+	uint32_t getShaderVariableTypeSize(ShaderVariableType type);
+	VkFormat getShaderVariableTypeFormat(ShaderVariableType type);
+
 public:
-    ShaderLayout(std::vector<ShaderVariableType> layout = {});
-    ~ShaderLayout();
+	ShaderLayout(std::vector<ShaderVariableType> layout = {});
+	~ShaderLayout();
 
-    uint32_t stride();
-    std::vector<VkVertexInputAttributeDescription> _getAttributeDescriptions();
+	uint32_t stride();
+	std::vector<VkVertexInputAttributeDescription> _getAttributeDescriptions();
 };
 
 class Shader
 {
 private:
-    VkDevice device;
-    VkPipeline graphicsPipeline;
-    VkPipelineLayout graphicsPipelineLayout;
+	VulkanApplicationData* vulkanData;
+	
+	VkPipeline graphicsPipeline;
+	VkPipelineLayout graphicsPipelineLayout;
+	VkDescriptorSetLayout descriptorSetLayout;
 
-    ShaderLayout layout;
+	ShaderLayout *uniformLayout;
+	ShaderLayout *vertexLayout;
 
-    static std::vector<char> readFileBytes(const char *path);
+	static std::vector<char> readFileBytes(const char *path);
 
-    VkShaderModule createShaderModule(std::vector<char> source);
+	VkShaderModule createShaderModule(std::vector<char> source);
 
 public:
-    static Shader *FromSPIRVFile(VkDevice device, VkExtent2D swapChainExtent,
-                                 VkRenderPass renderPass,
-                                 ShaderLayout shaderLayout,
-                                 const char *vertPath, const char *fragPath);
+	static Shader *FromSPIRVFile(VulkanApplication* app, 
+								 ShaderLayout *uniformLayout, ShaderLayout *vertexLayout,
+								 const char *vertPath, const char *fragPath);
 
-    Shader(VkDevice device, VkExtent2D swapChainExtent, VkRenderPass renderPass,
-           ShaderLayout shaderLayout,
-           std::vector<char> vertSource, std::vector<char> fragSource);
-    ~Shader();
+	Shader(VulkanApplication* app, ShaderLayout *uniformLayout,
+		   ShaderLayout *vertexLayout, std::vector<char> vertSource,
+		   std::vector<char> fragSource);
+	~Shader();
 
-    VkPipeline _getGraphicsPipeline();
+	VkPipeline _getGraphicsPipeline();
+	VkPipelineLayout _getGraphicsPipelineLayout();
+	VkDescriptorSet _getNewDescriptorSet();
 };
 } // namespace Shade

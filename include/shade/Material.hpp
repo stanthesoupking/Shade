@@ -1,5 +1,6 @@
 #pragma once
 
+#include "./Buffer.hpp"
 #include "./Shader.hpp"
 
 namespace Shade
@@ -7,11 +8,19 @@ namespace Shade
 class Material
 {
 private:
+    VulkanApplicationData* vulkanData;
+
+	Buffer* uniformBuffer;
     Shader* shader;
+
+    VkDescriptorSet descriptorSet;
 public:
-    Material(Shader* shader);
+    Material(VulkanApplication* app, Shader* shader, Buffer* uniformBuffer = nullptr);
     ~Material();
 
     Shader* getShader();
+	Buffer* getUniformBuffer();
+    
+    VkDescriptorSet _getDescriptorSet();
 };
 } // namespace Shade

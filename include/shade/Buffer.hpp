@@ -4,15 +4,27 @@
 
 #include <vulkan/vulkan.h>
 
+#include "./VulkanApplication.hpp"
+
 namespace Shade
 {
+
+enum BufferType
+{
+    VERTEX,
+    INDEX,
+    UNIFORM
+};
+
 class Buffer
 {
 private:
-    VkPhysicalDevice physicalDevice;
-    VkDevice device;
+    VulkanApplicationData *vulkanData;
+
     VkBuffer buffer;
     VkDeviceMemory bufferMemory;
+
+    BufferType bufferType = VERTEX;
 
     uint32_t elementSize;
     uint32_t elementCount;
@@ -20,16 +32,17 @@ private:
 
     uint32_t findMemoryType(uint32_t typeFilter,
                             VkMemoryPropertyFlags properties);
-
     void createBuffer(void *data, uint32_t elementSize, uint32_t elementCount);
     void freeBuffer();
+
 public:
-    Buffer(VkPhysicalDevice physicalDevice, VkDevice device, void *data, uint32_t elementSize, uint32_t elementCount);
+    Buffer(VulkanApplication *app, void *data, uint32_t elementSize, uint32_t elementCount, BufferType bufferType = VERTEX);
     ~Buffer();
 
     VkBuffer _getVkBuffer();
 
     uint32_t getElementCount();
+    uint32_t getTotalSize();
 
     void setData(void *data, uint32_t elementSize, uint32_t elementCount);
 };
