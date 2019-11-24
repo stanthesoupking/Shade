@@ -22,7 +22,7 @@ class DemoApplication: public ShadeApplication
 private:
     VertexBuffer* vertexBuffer;
     IndexBuffer* indexBuffer;
-    Buffer* uniformBuffer;
+    StructuredUniformBuffer* uniformBuffer;
     Shader* basicShader;
 	Material* basicMaterial;
 

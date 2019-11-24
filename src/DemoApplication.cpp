@@ -43,7 +43,7 @@ void DemoApplication::init()
         {1.0f, 0.0f, 0.0f}
     };
 
-    uniformBuffer = new Buffer(this, &uniforms, sizeof(Uniforms), 1, UNIFORM);
+    uniformBuffer = new StructuredUniformBuffer(this, uniformLayout, &uniforms);
 
     std::cout << "Loading shader..." << std::endl;
 
