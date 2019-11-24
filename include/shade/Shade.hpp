@@ -13,6 +13,7 @@
 #include "./Colour.hpp"
 #include "./Rect.hpp"
 #include "./Buffer.hpp"
+#include "./StructuredBuffer.hpp"
 #include "./IndexBuffer.hpp"
 #include "./VertexBuffer.hpp"
 #include "./Shader.hpp"

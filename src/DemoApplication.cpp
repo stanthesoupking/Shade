@@ -13,6 +13,14 @@ ShadeApplicationInfo DemoApplication::preInit()
 
 void DemoApplication::init()
 {
+	StructuredBufferLayout uniformLayout = StructuredBufferLayout({
+		{"colour", VEC3}
+	});
+
+	StructuredBufferLayout vertexLayout = StructuredBufferLayout({
+		{"pos", VEC2}
+	});
+
     std::cout << "Creating vertex buffer..." << std::endl;
 
     vertices = {
@@ -20,7 +28,7 @@ void DemoApplication::init()
         {{0.5f, 0.5f}},
         {{-0.5f, 0.5f}}};
 
-    vertexBuffer = new VertexBuffer(this, vertices.data(), sizeof(Vertex), vertices.size());
+    vertexBuffer = new VertexBuffer(this, vertexLayout, vertices.data(), vertices.size());
 
     std::cout << "Creating index buffer..." << std::endl;
 
@@ -39,8 +47,6 @@ void DemoApplication::init()
 
     std::cout << "Loading shader..." << std::endl;
 
-    ShaderLayout uniformLayout = ShaderLayout({VEC3});
-	ShaderLayout vertexLayout = ShaderLayout({VEC2});
     basicShader = Shader::FromSPIRVFile(this, &uniformLayout, &vertexLayout, "../shaders/vert.spv", "../shaders/frag.spv");
 
     basicMaterial = new Material(this, basicShader, uniformBuffer);

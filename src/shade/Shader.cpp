@@ -6,7 +6,8 @@
 using namespace Shade;
 
 Shader *Shader::FromSPIRVFile(VulkanApplication* app,
-							  ShaderLayout *uniformLayout, ShaderLayout *vertexLayout,
+							  StructuredBufferLayout*uniformLayout,
+							  StructuredBufferLayout*vertexLayout,
 							  const char *vertPath, const char *fragPath)
 {
 	return new Shader(
@@ -16,8 +17,8 @@ Shader *Shader::FromSPIRVFile(VulkanApplication* app,
 		readFileBytes(fragPath));
 }
 
-Shader::Shader(VulkanApplication* app,ShaderLayout *uniformLayout,
-			   ShaderLayout *vertexLayout, std::vector<char> vertSource,
+Shader::Shader(VulkanApplication* app, StructuredBufferLayout*uniformLayout,
+			   StructuredBufferLayout*vertexLayout, std::vector<char> vertSource,
 			   std::vector<char> fragSource)
 {
 	this->vulkanData = app->_getVulkanData();
@@ -55,7 +56,7 @@ Shader::Shader(VulkanApplication* app,ShaderLayout *uniformLayout,
 
 	VkVertexInputBindingDescription bindingDescription = {};
 	bindingDescription.binding = 0;
-	bindingDescription.stride = vertexLayout->stride();
+	bindingDescription.stride = vertexLayout->getStride();
 	bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	auto attributeDescriptions = vertexLayout->_getAttributeDescriptions();
@@ -264,92 +265,6 @@ VkShaderModule Shader::createShaderModule(std::vector<char> source)
 	}
 
 	return mod;
-}
-
-// Shader Layout Implementation
-
-ShaderLayout::ShaderLayout(std::vector<ShaderVariableType> layout)
-{
-	this->layout = layout;
-}
-
-ShaderLayout::~ShaderLayout()
-{
-}
-
-uint32_t ShaderLayout::getShaderVariableTypeSize(ShaderVariableType type)
-{
-	switch (type)
-	{
-	case FLOAT:
-		return 4;
-	case INT:
-		return 4;
-	case VEC2:
-		return 8;
-	case VEC3:
-		return 12;
-	case VEC4:
-		return 16;
-	default:
-		std::runtime_error("Shade: Unknown variable type in shader layout.");
-		break;
-	}
-}
-
-VkFormat ShaderLayout::getShaderVariableTypeFormat(ShaderVariableType type)
-{
-	switch (type)
-	{
-	case FLOAT:
-		return VK_FORMAT_R32_SFLOAT;
-	case INT:
-		return VK_FORMAT_R32_SINT;
-	case VEC2:
-		return VK_FORMAT_R32G32_SFLOAT;
-	case VEC3:
-		return VK_FORMAT_R32G32B32_SFLOAT;
-	case VEC4:
-		return VK_FORMAT_R32G32B32A32_SFLOAT;
-	default:
-		std::runtime_error("Shade: Unknown variable type in shader layout.");
-		break;
-	}
-}
-
-uint32_t ShaderLayout::stride()
-{
-	uint32_t stride = 0;
-
-	for (const auto type : layout)
-	{
-		stride += getShaderVariableTypeSize(type);
-	}
-
-	return stride;
-}
-
-std::vector<VkVertexInputAttributeDescription> ShaderLayout::_getAttributeDescriptions()
-{
-	std::vector<VkVertexInputAttributeDescription> descriptions(layout.size());
-
-	uint32_t i = 0;
-	uint32_t offset = 0;
-	for (const auto type : layout)
-	{
-		descriptions[i].binding = 0;
-		descriptions[i].location = 0;
-		descriptions[i].format = getShaderVariableTypeFormat(type);
-
-		// TODO: Check if offset calculation is correct.
-		//  e.g. is it on a bit-basis or element index basis?
-		descriptions[i].offset = offset;
-
-		i++;
-		offset += getShaderVariableTypeSize(type);
-	}
-
-	return descriptions;
 }
 
 VkPipeline Shader::_getGraphicsPipeline()

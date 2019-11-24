@@ -5,33 +5,10 @@
 #include <vulkan/vulkan.h>
 
 #include "./VulkanApplication.hpp"
+#include "./StructuredBuffer.hpp"
 
 namespace Shade
 {
-enum ShaderVariableType
-{
-	FLOAT,
-	INT,
-	VEC2,
-	VEC3,
-	VEC4
-};
-
-class ShaderLayout
-{
-private:
-	std::vector<ShaderVariableType> layout;
-
-	uint32_t getShaderVariableTypeSize(ShaderVariableType type);
-	VkFormat getShaderVariableTypeFormat(ShaderVariableType type);
-
-public:
-	ShaderLayout(std::vector<ShaderVariableType> layout = {});
-	~ShaderLayout();
-
-	uint32_t stride();
-	std::vector<VkVertexInputAttributeDescription> _getAttributeDescriptions();
-};
 
 class Shader
 {
@@ -42,8 +19,8 @@ private:
 	VkPipelineLayout graphicsPipelineLayout;
 	VkDescriptorSetLayout descriptorSetLayout;
 
-	ShaderLayout *uniformLayout;
-	ShaderLayout *vertexLayout;
+	StructuredBufferLayout*uniformLayout;
+	StructuredBufferLayout*vertexLayout;
 
 	static std::vector<char> readFileBytes(const char *path);
 
@@ -51,11 +28,11 @@ private:
 
 public:
 	static Shader *FromSPIRVFile(VulkanApplication* app, 
-								 ShaderLayout *uniformLayout, ShaderLayout *vertexLayout,
+		StructuredBufferLayout*uniformLayout, StructuredBufferLayout*vertexLayout,
 								 const char *vertPath, const char *fragPath);
 
-	Shader(VulkanApplication* app, ShaderLayout *uniformLayout,
-		   ShaderLayout *vertexLayout, std::vector<char> vertSource,
+	Shader(VulkanApplication* app, StructuredBufferLayout*uniformLayout,
+		StructuredBufferLayout*vertexLayout, std::vector<char> vertSource,
 		   std::vector<char> fragSource);
 	~Shader();
 
