@@ -3,15 +3,15 @@
 
 layout(binding = 0) uniform uData_t
 {
-    vec3 color;
+    vec3 colour;
 } uData;
 
 layout(location = 0) in vec2 inPosition;
 
-layout(location = 0) out vec3 fragColor;
+layout(location = 0) out vec3 fragColour;
 
 
 void main() {
     gl_Position = vec4(inPosition, 0.0, 1.0);
-    fragColor = uData.color;
+    fragColour = uData.colour;
 }
