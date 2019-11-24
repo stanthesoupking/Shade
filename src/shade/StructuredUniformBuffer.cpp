@@ -13,3 +13,8 @@ StructuredUniformBuffer::~StructuredUniformBuffer()
 {
 
 }
+
+void StructuredUniformBuffer::setData(void* data)
+{
+	StructuredBuffer::setData(data, 1);
+}

@@ -49,5 +49,7 @@ private:
 public:
 	StructuredBuffer(VulkanApplication* app, StructuredBufferLayout layout, void* data, uint32_t count, BufferType bufferType = VERTEX);
 	~StructuredBuffer();
+
+	void setData(void* data, uint32_t count);
 };
 }

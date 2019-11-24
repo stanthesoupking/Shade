@@ -16,6 +16,11 @@ StructuredBuffer::~StructuredBuffer()
 
 }
 
+void StructuredBuffer::setData(void* data, uint32_t count)
+{
+	Buffer::setData(data, layout.getStride(), count);
+}
+
 // Structured Buffer Layout Implementation
 
 StructuredBufferLayout::StructuredBufferLayout(std::vector<StructuredBufferLayoutEntry> layout)

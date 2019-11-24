@@ -29,6 +29,8 @@ private:
     std::vector<Vertex> vertices;
     std::vector<int> indices;
     Uniforms uniforms;
+
+    int time;
 public:
     ShadeApplicationInfo preInit();
     void init();

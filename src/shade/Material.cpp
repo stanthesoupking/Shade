@@ -5,7 +5,7 @@ using namespace Shade;
 Material::Material(VulkanApplication* app, Shader* shader, Buffer* uniformBuffer)
 {
     this->vulkanData = app->_getVulkanData();
-    
+
     this->shader = shader;
 	this->uniformBuffer = uniformBuffer;
     

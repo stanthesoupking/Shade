@@ -13,5 +13,7 @@ public:
 		StructuredBufferLayout uniformLayout, void* data,
 		uint32_t location = 0);
 	~StructuredUniformBuffer();
+
+	void setData(void* data);
 };
 };

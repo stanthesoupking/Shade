@@ -4,7 +4,7 @@
 
 using namespace Shade;
 
-Buffer::Buffer(VulkanApplication* app, void *data, uint32_t stride, uint32_t count, BufferType bufferType)
+Buffer::Buffer(VulkanApplication *app, void *data, uint32_t stride, uint32_t count, BufferType bufferType)
 {
     this->vulkanData = app->_getVulkanData();
     this->bufferType = bufferType;
@@ -121,9 +121,19 @@ void Buffer::setData(void *data, uint32_t stride, uint32_t count)
     // TODO: Optimise this so it doesn't free+alloc buffer when element count &
     //  size are the same as previous values.
 
-    // Free old buffer data
-    freeBuffer();
+    if (stride * count == totalBufferSize)
+    {
+        void *mappedData;
+        vkMapMemory(vulkanData->device, bufferMemory, 0, totalBufferSize, 0, &mappedData);
+        memcpy(mappedData, data, totalBufferSize);
+        vkUnmapMemory(vulkanData->device, bufferMemory);
+    }
+    else
+    {
+        // Free old buffer data
+        freeBuffer();
 
-    // Set new data
-    createBuffer(data, stride, count);
+        // Set new data
+        createBuffer(data, stride, count);
+    }
 }

@@ -13,13 +13,9 @@ ShadeApplicationInfo DemoApplication::preInit()
 
 void DemoApplication::init()
 {
-	StructuredBufferLayout uniformLayout = StructuredBufferLayout({
-		{"colour", VEC3}
-	});
+    StructuredBufferLayout uniformLayout = StructuredBufferLayout({{"colour", VEC3}});
 
-	StructuredBufferLayout vertexLayout = StructuredBufferLayout({
-		{"pos", VEC2}
-	});
+    StructuredBufferLayout vertexLayout = StructuredBufferLayout({{"pos", VEC2}});
 
     std::cout << "Creating vertex buffer..." << std::endl;
 
@@ -40,8 +36,7 @@ void DemoApplication::init()
     std::cout << "Creating uniform buffer..." << std::endl;
 
     uniforms = {
-        {1.0f, 0.0f, 0.0f}
-    };
+        {1.0f, 0.0f, 0.0f}};
 
     uniformBuffer = new StructuredUniformBuffer(this, uniformLayout, &uniforms);
 
@@ -50,6 +45,8 @@ void DemoApplication::init()
     basicShader = Shader::FromSPIRVFile(this, &uniformLayout, &vertexLayout, "../shaders/vert.spv", "../shaders/frag.spv");
 
     basicMaterial = new Material(this, basicShader, uniformBuffer);
+
+    time = 0;
 }
 
 void DemoApplication::destroy()
@@ -65,7 +62,20 @@ void DemoApplication::destroy()
 
 void DemoApplication::update()
 {
+    // Demo colour shift
+    // TODO: Add more colours
+    time++;
 
+    if (time > 100)
+    {
+        time = 0;
+    }
+
+    uniforms = {
+        {1.0f - (time / 100.0f), 0.0f, 0.0f}
+    };
+
+    uniformBuffer->setData(&uniforms);
 }
 
 void DemoApplication::render()
