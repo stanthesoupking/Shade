@@ -10,6 +10,8 @@
 
 #include "./VulkanApplication.hpp"
 #include "./Buffer.hpp"
+#include "./IndexBuffer.hpp"
+#include "./VertexBuffer.hpp"
 #include "./Rect.hpp"
 #include "./Colour.hpp"
 #include "./Shade.hpp"
@@ -99,6 +101,6 @@ public:
 
     void setRenderClearColour(Colour c);
 
-    void renderMesh(Buffer *indexBuffer, Buffer *vertexBuffer, Material *material);
+    void renderMesh(IndexBuffer *indexBuffer, VertexBuffer *vertexBuffer, Material *material);
 };
 } // namespace Shade

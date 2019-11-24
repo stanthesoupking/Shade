@@ -14,6 +14,7 @@
 #include "./Rect.hpp"
 #include "./Buffer.hpp"
 #include "./IndexBuffer.hpp"
+#include "./VertexBuffer.hpp"
 #include "./Shader.hpp"
 #include "./Material.hpp"
 #include "./ShadeApplication.hpp"

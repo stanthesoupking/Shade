@@ -760,7 +760,7 @@ void ShadeApplication::setRenderClearColour(Colour c)
     this->info.clearColour = c;
 }
 
-void ShadeApplication::renderMesh(Buffer *indexBuffer, Buffer *vertexBuffer, Material *material)
+void ShadeApplication::renderMesh(IndexBuffer *indexBuffer, VertexBuffer *vertexBuffer, Material *material)
 {
     // Bind shader graphics pipeline
     vkCmdBindPipeline(vulkanData.commandBuffers[vulkanData.currentImageIndex],

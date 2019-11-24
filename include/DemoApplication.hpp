@@ -20,7 +20,7 @@ struct Uniforms
 class DemoApplication: public ShadeApplication
 {
 private:
-    Buffer* vertexBuffer;
+    VertexBuffer* vertexBuffer;
     IndexBuffer* indexBuffer;
     Buffer* uniformBuffer;
     Shader* basicShader;

@@ -4,12 +4,12 @@
 
 using namespace Shade;
 
-Buffer::Buffer(VulkanApplication* app, void *data, uint32_t elementSize, uint32_t elementCount, BufferType bufferType)
+Buffer::Buffer(VulkanApplication* app, void *data, uint32_t stride, uint32_t count, BufferType bufferType)
 {
     this->vulkanData = app->_getVulkanData();
     this->bufferType = bufferType;
 
-    createBuffer(data, elementSize, elementCount);
+    createBuffer(data, stride, count);
 }
 
 Buffer::~Buffer()
@@ -37,11 +37,11 @@ uint32_t Buffer::findMemoryType(uint32_t typeFilter,
     throw std::runtime_error("Failed to find suitable memory type!");
 }
 
-void Buffer::createBuffer(void *data, uint32_t elementSize, uint32_t elementCount)
+void Buffer::createBuffer(void *data, uint32_t stride, uint32_t count)
 {
-    this->elementSize = elementSize;
-    this->elementCount = elementCount;
-    this->totalBufferSize = elementSize * elementCount;
+    this->stride = stride;
+    this->count = count;
+    this->totalBufferSize = stride * count;
 
     VkBufferCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
@@ -108,7 +108,7 @@ VkBuffer Buffer::_getVkBuffer()
 
 uint32_t Buffer::getElementCount()
 {
-    return this->elementCount;
+    return this->count;
 }
 
 uint32_t Buffer::getTotalSize()
@@ -116,7 +116,7 @@ uint32_t Buffer::getTotalSize()
     return this->totalBufferSize;
 }
 
-void Buffer::setData(void *data, uint32_t elementSize, uint32_t elementCount)
+void Buffer::setData(void *data, uint32_t stride, uint32_t count)
 {
     // TODO: Optimise this so it doesn't free+alloc buffer when element count &
     //  size are the same as previous values.
@@ -125,5 +125,5 @@ void Buffer::setData(void *data, uint32_t elementSize, uint32_t elementCount)
     freeBuffer();
 
     // Set new data
-    createBuffer(data, elementSize, elementCount);
+    createBuffer(data, stride, count);
 }

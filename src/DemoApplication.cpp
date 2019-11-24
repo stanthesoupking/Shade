@@ -20,7 +20,7 @@ void DemoApplication::init()
         {{0.5f, 0.5f}},
         {{-0.5f, 0.5f}}};
 
-    vertexBuffer = new Buffer(this, vertices.data(), sizeof(Vertex), vertices.size());
+    vertexBuffer = new VertexBuffer(this, vertices.data(), sizeof(Vertex), vertices.size());
 
     std::cout << "Creating index buffer..." << std::endl;
 
