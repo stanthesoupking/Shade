@@ -69,8 +69,6 @@ void DemoApplication::destroy()
 
 void DemoApplication::update()
 {
-    // Demo colour shift
-    // TODO: Add more colours
     time++;
 
     if (time > 1000)
