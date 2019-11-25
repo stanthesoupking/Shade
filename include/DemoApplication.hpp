@@ -4,23 +4,21 @@
 #include "shade/Shade.hpp"
 
 #define GLM_FORCE_RADIANS
-#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #include <glm/glm.hpp>
-#include <glm/gtx/type_aligned.hpp>
 #include <glm/gtc/matrix_transform.hpp>
 
 using namespace Shade;
 
 struct Vertex
 {
-    alignas(16) glm::vec2 pos;
-	alignas(16) glm::vec3 inColour;
+    glm::vec2 pos;
+	glm::vec3 inColour;
 };
 
 struct Uniforms
 {
     glm::vec3 colour;
-    glm::aligned_mat4 mvp;
+    glm::mat4 mvp;
 };
 
 class DemoApplication: public ShadeApplication

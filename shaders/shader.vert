@@ -19,5 +19,5 @@ void main() {
 
     gl_Position = transformedPosition;
 
-    fragColour = inColour;//uData.colour;
+    fragColour = inColour;
 }
