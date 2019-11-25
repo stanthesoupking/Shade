@@ -43,9 +43,15 @@ uint32_t StructuredBufferLayout::getBufferVariableTypeSize(StructuredBufferVaria
 	case VEC2:
 		return 8;
 	case VEC3:
-		return 12;
+		return 16;
 	case VEC4:
 		return 16;
+	case MAT2:
+		return 16;
+	case MAT3:
+		return 52;
+	case MAT4:
+		return 64;
 	default:
 		std::runtime_error("Shade: Unknown variable type in shader layout.");
 		break;
@@ -66,6 +72,12 @@ VkFormat StructuredBufferLayout::getBufferVariableTypeFormat(StructuredBufferVar
 		return VK_FORMAT_R32G32B32_SFLOAT;
 	case VEC4:
 		return VK_FORMAT_R32G32B32A32_SFLOAT;
+	case MAT2:
+		return VK_FORMAT_UNDEFINED;	 // TODO: Find correct format
+	case MAT3:
+		return VK_FORMAT_UNDEFINED;
+	case MAT4:
+		return VK_FORMAT_UNDEFINED;
 	default:
 		std::runtime_error("Shade: Unknown variable type in shader layout.");
 		break;

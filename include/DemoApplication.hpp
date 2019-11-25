@@ -3,7 +3,11 @@
 #define SHADE_ENABLE_VALIDATION_LAYERS
 #include "shade/Shade.hpp"
 
+#define GLM_FORCE_RADIANS
+#define GLM_FORCE_DEFAULT_ALIGNED_GENTYPES
 #include <glm/glm.hpp>
+#include <glm/gtx/type_aligned.hpp>
+#include <glm/gtc/matrix_transform.hpp>
 
 using namespace Shade;
 
@@ -15,6 +19,7 @@ struct Vertex
 struct Uniforms
 {
     glm::vec3 colour;
+    glm::aligned_mat4 transformMatrix;
 };
 
 class DemoApplication: public ShadeApplication

@@ -4,6 +4,7 @@
 layout(binding = 0) uniform uData_t
 {
     vec3 colour;
+    mat4 transformMatrix;
 } uData;
 
 layout(location = 0) in vec2 inPosition;
@@ -12,6 +13,9 @@ layout(location = 0) out vec3 fragColour;
 
 
 void main() {
-    gl_Position = vec4(inPosition, 0.0, 1.0);
+    vec4 transformedPosition =  vec4(inPosition, 1.0, 1.0) * uData.transformMatrix;
+
+    gl_Position = transformedPosition;
+
     fragColour = uData.colour;
 }

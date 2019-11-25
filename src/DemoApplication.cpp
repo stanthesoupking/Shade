@@ -13,7 +13,11 @@ ShadeApplicationInfo DemoApplication::preInit()
 
 void DemoApplication::init()
 {
-    StructuredBufferLayout uniformLayout = StructuredBufferLayout({{"colour", VEC3}});
+    StructuredBufferLayout uniformLayout = StructuredBufferLayout(
+        {{"colour", VEC3},
+         {"transformMatrix", MAT4}});
+
+    std::cout << "Uniform size is " << sizeof(Uniforms) << std::endl;
 
     StructuredBufferLayout vertexLayout = StructuredBufferLayout({{"pos", VEC2}});
 
@@ -36,7 +40,9 @@ void DemoApplication::init()
     std::cout << "Creating uniform buffer..." << std::endl;
 
     uniforms = {
-        {1.0f, 0.0f, 0.0f}};
+        {1.0f, 0.0f, 0.0f},
+        glm::aligned_mat4(1.0f)
+    };
 
     uniformBuffer = new StructuredUniformBuffer(this, uniformLayout, &uniforms);
 
@@ -66,13 +72,14 @@ void DemoApplication::update()
     // TODO: Add more colours
     time++;
 
-    if (time > 100)
+    if (time > 1000)
     {
         time = 0;
     }
 
     uniforms = {
-        {1.0f - (time / 100.0f), 0.0f, 0.0f}
+        {1.0f, 0.0f, 0.0f},
+        glm::rotate(glm::aligned_mat4(1.0f), (time / 1000.0f) * glm::radians(360.0f), glm::aligned_vec3(0.0f, 0.0f, 1.0f))
     };
 
     uniformBuffer->setData(&uniforms);
