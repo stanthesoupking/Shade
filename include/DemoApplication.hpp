@@ -13,13 +13,14 @@ using namespace Shade;
 
 struct Vertex
 {
-    glm::vec2 pos;
+    alignas(16) glm::vec2 pos;
+	alignas(16) glm::vec3 inColour;
 };
 
 struct Uniforms
 {
     glm::vec3 colour;
-    glm::aligned_mat4 transformMatrix;
+    glm::aligned_mat4 mvp;
 };
 
 class DemoApplication: public ShadeApplication

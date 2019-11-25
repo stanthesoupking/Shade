@@ -15,25 +15,26 @@ void DemoApplication::init()
 {
     StructuredBufferLayout uniformLayout = StructuredBufferLayout(
         {{"colour", VEC3},
-         {"transformMatrix", MAT4}});
+         {"mvp", MAT4}});
 
-    std::cout << "Uniform size is " << sizeof(Uniforms) << std::endl;
-
-    StructuredBufferLayout vertexLayout = StructuredBufferLayout({{"pos", VEC2}});
+    StructuredBufferLayout vertexLayout = StructuredBufferLayout(
+		{{"pos", VEC2},
+		{"inColour", VEC3}});
 
     std::cout << "Creating vertex buffer..." << std::endl;
 
-    vertices = {
-        {{0.0f, -0.5f}},
-        {{0.5f, 0.5f}},
-        {{-0.5f, 0.5f}}};
+	vertices = {
+		{{0.5f, -0.5f}, {1.0f, 0.0f, 0.0f}},
+		{{0.5f, 0.5f}, {0.0f, 1.0f, 0.0f}},
+		{{-0.5f, 0.5f}, {0.0f, 0.0f, 1.0f}},
+		{{-0.5f, -0.5f}, {1.0f, 1.0f, 1.0f}} };
 
     vertexBuffer = new VertexBuffer(this, vertexLayout, vertices.data(), vertices.size());
 
     std::cout << "Creating index buffer..." << std::endl;
 
     indices = {
-        0, 1, 2};
+        2, 1, 0, 3, 2, 0};
 
     indexBuffer = new IndexBuffer(this, indices);
 
@@ -77,10 +78,12 @@ void DemoApplication::update()
         time = 0;
     }
 
-    uniforms = {
-        {1.0f, 0.0f, 0.0f},
-        glm::rotate(glm::aligned_mat4(1.0f), (time / 1000.0f) * glm::radians(360.0f), glm::aligned_vec3(0.0f, 0.0f, 1.0f))
-    };
+	// Calculate mvp
+	glm::aligned_mat4 model = glm::rotate(glm::aligned_mat4(1.0f), (time / 1000.0f) * glm::radians(180.0f), glm::aligned_vec3(0.0f, 0.0f, 1.0f));
+	glm::aligned_mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::aligned_mat4 projection = glm::perspective(glm::radians(45.0f), 860.0f / 480.0f, 0.1f, 10.0f);
+	uniforms.mvp = projection * view * model;
+	uniforms.mvp[1][1] *= -1;
 
     uniformBuffer->setData(&uniforms);
 }

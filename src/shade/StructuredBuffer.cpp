@@ -41,7 +41,7 @@ uint32_t StructuredBufferLayout::getBufferVariableTypeSize(StructuredBufferVaria
 	case INT:
 		return 4;
 	case VEC2:
-		return 8;
+		return 16;
 	case VEC3:
 		return 16;
 	case VEC4:
@@ -105,7 +105,7 @@ std::vector<VkVertexInputAttributeDescription> StructuredBufferLayout::_getAttri
 	for (const auto entry : layout)
 	{
 		descriptions[i].binding = 0;
-		descriptions[i].location = 0;
+		descriptions[i].location = i;
 		descriptions[i].format = getBufferVariableTypeFormat(entry.type);
 
 		// TODO: Check if offset calculation is correct.
