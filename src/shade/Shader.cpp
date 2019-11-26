@@ -6,25 +6,21 @@
 using namespace Shade;
 
 Shader *Shader::FromSPIRVFile(VulkanApplication* app,
-							  StructuredBufferLayout*uniformLayout,
-							  StructuredBufferLayout*vertexLayout,
+							  ShaderLayout shaderLayout,
 							  const char *vertPath, const char *fragPath)
 {
 	return new Shader(
-		app,
-		uniformLayout, vertexLayout,
+		app, shaderLayout,
 		readFileBytes(vertPath),
 		readFileBytes(fragPath));
 }
 
-Shader::Shader(VulkanApplication* app, StructuredBufferLayout*uniformLayout,
-			   StructuredBufferLayout*vertexLayout, std::vector<char> vertSource,
-			   std::vector<char> fragSource)
+Shader::Shader(VulkanApplication* app, ShaderLayout shaderLayout,
+			   std::vector<char> vertSource, std::vector<char> fragSource)
 {
 	this->vulkanData = app->_getVulkanData();
 
-	this->uniformLayout = uniformLayout;
-	this->vertexLayout = vertexLayout;
+	this->shaderLayout = shaderLayout;
 
 	// Create shader modules
 	VkShaderModule vertMod = createShaderModule(vertSource);
@@ -56,10 +52,10 @@ Shader::Shader(VulkanApplication* app, StructuredBufferLayout*uniformLayout,
 
 	VkVertexInputBindingDescription bindingDescription = {};
 	bindingDescription.binding = 0;
-	bindingDescription.stride = vertexLayout->getStride();
+	bindingDescription.stride = shaderLayout.vertexLayout.getStride();
 	bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
-	auto attributeDescriptions = vertexLayout->_getAttributeDescriptions();
+	auto attributeDescriptions = shaderLayout.vertexLayout._getAttributeDescriptions();
 
 	vertexInputInfo.vertexBindingDescriptionCount = 1;
 	vertexInputInfo.vertexAttributeDescriptionCount = static_cast<uint32_t>(attributeDescriptions.size());
@@ -67,20 +63,32 @@ Shader::Shader(VulkanApplication* app, StructuredBufferLayout*uniformLayout,
 	vertexInputInfo.pVertexAttributeDescriptions = attributeDescriptions.data();
 
 	// Create uniform input binding description
-	if (uniformLayout != nullptr)
+	if (shaderLayout.uniformsLayout.size() > 0)
 	{
-		VkDescriptorSetLayoutBinding uniformLayoutBinding = {};
-		uniformLayoutBinding.binding = 0;
-		uniformLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-		uniformLayoutBinding.descriptorCount = 1;
-		uniformLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
-		uniformLayoutBinding.pImmutableSamplers = nullptr;
+		descriptorSetLayout = {};
+
+		std::vector<VkDescriptorSetLayoutBinding> bindings;
+		bindings.resize(shaderLayout.uniformsLayout.size());
+
+		for (int i = 0; i < shaderLayout.uniformsLayout.size(); i++)
+		{
+			UniformLayoutEntry entry = shaderLayout.uniformsLayout.at(i);
+
+			VkDescriptorSetLayoutBinding uniformLayoutBinding = {};
+			uniformLayoutBinding.binding = entry.binding;
+			uniformLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			uniformLayoutBinding.descriptorCount = 1;
+			uniformLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+			uniformLayoutBinding.pImmutableSamplers = nullptr;
+
+			bindings[i] = uniformLayoutBinding;
+		}
+			
 
 		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
-		layoutInfo.bindingCount = 1;
-		layoutInfo.pBindings = &uniformLayoutBinding;
-
+		layoutInfo.bindingCount = bindings.size();
+		layoutInfo.pBindings = bindings.data();
 		if (vkCreateDescriptorSetLayout(vulkanData->device, &layoutInfo, nullptr, &descriptorSetLayout) != VK_SUCCESS)
 		{
 			throw std::runtime_error("Shade: Failed to create descriptor set layout!");
@@ -169,7 +177,7 @@ Shader::Shader(VulkanApplication* app, StructuredBufferLayout*uniformLayout,
 	pipelineLayoutInfo.sType =
 		VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO;
 
-	if (uniformLayout != nullptr)
+	if (shaderLayout.uniformsLayout.size() > 0)
 	{
 		pipelineLayoutInfo.setLayoutCount = 1;
 		pipelineLayoutInfo.pSetLayouts = &descriptorSetLayout;
@@ -292,4 +300,21 @@ VkDescriptorSet Shader::_getNewDescriptorSet()
 	}
 
 	return descriptorSet;
+}
+
+ShaderLayout Shader::getShaderLayout()
+{
+	return this->shaderLayout;
+}
+
+// Shader Layout implementation:
+ShaderLayout::ShaderLayout(std::vector<UniformLayoutEntry> uniformsLayout, StructuredBufferLayout vertexLayout)
+{
+	this->uniformsLayout = uniformsLayout;
+	this->vertexLayout = vertexLayout;
+}
+
+ShaderLayout::~ShaderLayout()
+{
+
 }

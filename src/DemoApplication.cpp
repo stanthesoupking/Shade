@@ -13,13 +13,17 @@ ShadeApplicationInfo DemoApplication::preInit()
 
 void DemoApplication::init()
 {
-    StructuredBufferLayout uniformLayout = StructuredBufferLayout(
-        {{"colour", VEC3},
-         {"mvp", MAT4}});
+    StructuredBufferLayout uniformDataLayout = StructuredBufferLayout(
+        {{"mvp", MAT4}});
 
     StructuredBufferLayout vertexLayout = StructuredBufferLayout(
 		{{"pos", VEC2},
 		{"inColour", VEC3}});
+	
+	ShaderLayout shaderLayout = {
+		{{0,  uniformDataLayout}},
+		vertexLayout
+	};
 
     std::cout << "Creating vertex buffer..." << std::endl;
 
@@ -40,18 +44,17 @@ void DemoApplication::init()
 
     std::cout << "Creating uniform buffer..." << std::endl;
 
-    uniforms = {
-        {1.0f, 0.0f, 0.0f},
+	uniformData = {
         glm::mat4(1.0f)
     };
 
-    uniformBuffer = new StructuredUniformBuffer(this, uniformLayout, &uniforms);
+    uniformBuffer = new StructuredUniformBuffer(this, uniformDataLayout, &uniformData);
 
     std::cout << "Loading shader..." << std::endl;
 
-    basicShader = Shader::FromSPIRVFile(this, &uniformLayout, &vertexLayout, "../shaders/vert.spv", "../shaders/frag.spv");
+    basicShader = Shader::FromSPIRVFile(this, shaderLayout, "../shaders/vert.spv", "../shaders/frag.spv");
 
-    basicMaterial = new Material(this, basicShader, uniformBuffer);
+	basicMaterial = new Material(this, basicShader, { uniformBuffer });
 
     time = 0;
 }
@@ -80,10 +83,10 @@ void DemoApplication::update()
 	glm::mat4 model = glm::rotate(glm::mat4(1.0f), (time / 1000.0f) * glm::radians(180.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	glm::mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 860.0f / 480.0f, 0.1f, 10.0f);
-	uniforms.mvp = projection * view * model;
-	uniforms.mvp[1][1] *= -1;
+	uniformData.mvp = projection * view * model;
+	uniformData.mvp[1][1] *= -1;
 
-    uniformBuffer->setData(&uniforms);
+    uniformBuffer->setData(&uniformData);
 }
 
 void DemoApplication::render()

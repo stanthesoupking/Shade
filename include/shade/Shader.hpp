@@ -1,6 +1,7 @@
 #pragma once
 
 #include <vector>
+#include <variant>
 
 #include <vulkan/vulkan.h>
 
@@ -9,6 +10,23 @@
 
 namespace Shade
 {
+struct UniformLayoutEntry
+{
+	uint32_t binding;
+	std::variant<StructuredBufferLayout> layout;
+};
+
+class ShaderLayout
+{
+	private:
+	public:
+		std::vector<UniformLayoutEntry> uniformsLayout;
+		StructuredBufferLayout vertexLayout;
+
+		ShaderLayout() { uniformsLayout = {}; vertexLayout = {}; }
+		ShaderLayout(std::vector<UniformLayoutEntry> uniformsLayout, StructuredBufferLayout vertexLayout);
+		~ShaderLayout();
+};
 
 class Shader
 {
@@ -19,8 +37,7 @@ private:
 	VkPipelineLayout graphicsPipelineLayout;
 	VkDescriptorSetLayout descriptorSetLayout;
 
-	StructuredBufferLayout*uniformLayout;
-	StructuredBufferLayout*vertexLayout;
+	ShaderLayout shaderLayout;
 
 	static std::vector<char> readFileBytes(const char *path);
 
@@ -28,16 +45,17 @@ private:
 
 public:
 	static Shader *FromSPIRVFile(VulkanApplication* app, 
-		StructuredBufferLayout*uniformLayout, StructuredBufferLayout*vertexLayout,
+								 ShaderLayout shaderLayout,
 								 const char *vertPath, const char *fragPath);
 
-	Shader(VulkanApplication* app, StructuredBufferLayout*uniformLayout,
-		StructuredBufferLayout*vertexLayout, std::vector<char> vertSource,
-		   std::vector<char> fragSource);
+	Shader(VulkanApplication* app, ShaderLayout shaderLayout,
+		   std::vector<char> vertSource, std::vector<char> fragSource);
 	~Shader();
 
 	VkPipeline _getGraphicsPipeline();
 	VkPipelineLayout _getGraphicsPipelineLayout();
-	VkDescriptorSet _getNewDescriptorSet();
+	VkDescriptorSet Shader::_getNewDescriptorSet();
+
+	ShaderLayout getShaderLayout();
 };
 } // namespace Shade

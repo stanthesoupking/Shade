@@ -15,9 +15,8 @@ struct Vertex
 	glm::vec3 inColour;
 };
 
-struct Uniforms
+struct UniformData
 {
-    glm::vec3 colour;
     glm::mat4 mvp;
 };
 
@@ -32,7 +31,7 @@ private:
 
     std::vector<Vertex> vertices;
     std::vector<int> indices;
-    Uniforms uniforms;
+	UniformData uniformData;
 
     int time;
 public:

@@ -13,9 +13,9 @@ private:
 	Buffer* uniformBuffer;
     Shader* shader;
 
-    VkDescriptorSet descriptorSet;
+	VkDescriptorSet descriptorSet;
 public:
-    Material(VulkanApplication* app, Shader* shader, Buffer* uniformBuffer = nullptr);
+	Material(VulkanApplication* app, Shader* shader, std::vector<Buffer*> uniformBuffers);
     ~Material();
 
     Shader* getShader();

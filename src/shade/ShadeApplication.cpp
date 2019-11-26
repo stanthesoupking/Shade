@@ -772,12 +772,11 @@ void ShadeApplication::renderMesh(IndexBuffer *indexBuffer, VertexBuffer *vertex
     VkDeviceSize vertexBufferOffsets[] = {0};
     vkCmdBindVertexBuffers(vulkanData.commandBuffers[vulkanData.currentImageIndex], 0, 1, vertexBuffers, vertexBufferOffsets);
 
-    VkDescriptorSet descriptorSets[] = {
-        material->_getDescriptorSet()};
+    VkDescriptorSet descriptorSet = material->_getDescriptorSet();
 
     vkCmdBindDescriptorSets(vulkanData.commandBuffers[vulkanData.currentImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
                             material->getShader()->_getGraphicsPipelineLayout(),
-                            0, 1, descriptorSets, 0, nullptr);
+                            0, 1, &descriptorSet, 0, nullptr);
 
     vkCmdDrawIndexed(vulkanData.commandBuffers[vulkanData.currentImageIndex], indexBuffer->getElementCount(), 1, 0, 0, 0);
 }

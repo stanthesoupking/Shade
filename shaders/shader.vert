@@ -3,7 +3,6 @@
 
 layout(binding = 0) uniform uData_t
 {
-    vec3 colour;
     mat4 mvp;
 } uData;
 
