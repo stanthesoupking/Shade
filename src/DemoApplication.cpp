@@ -7,6 +7,7 @@ ShadeApplicationInfo DemoApplication::preInit()
     ShadeApplicationInfo appInfo;
     appInfo.windowSize = Rect(860, 640);
     appInfo.clearColour = Colour(0.15f, 0.15f, 0.15f);
+	appInfo.windowResizable = true;
 
     return appInfo;
 }
@@ -87,10 +88,13 @@ void DemoApplication::update()
         time = 0;
     }
 
+	// Get current window size
+	Rect windowSize = getWindowSize();
+
 	// Calculate mvp
 	glm::mat4 model = glm::rotate(glm::mat4(1.0f), (time / 1000.0f) * glm::radians(360.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	glm::mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
-	glm::mat4 projection = glm::perspective(glm::radians(45.0f), 860.0f / 480.0f, 0.1f, 10.0f);
+	glm::mat4 projection = glm::perspective(glm::radians(45.0f), windowSize.width / windowSize.height, 0.1f, 10.0f);
 	uniformData.mvp = projection * view * model;
 
     uniformBuffer->setData(&uniformData);

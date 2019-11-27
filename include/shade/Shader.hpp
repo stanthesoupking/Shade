@@ -39,6 +39,7 @@ class ShaderLayout
 class Shader
 {
 private:
+	VulkanApplication* app;
 	VulkanApplicationData* vulkanData;
 	
 	VkPipeline graphicsPipeline;
@@ -47,9 +48,16 @@ private:
 
 	ShaderLayout shaderLayout;
 
+	// Cached shader modules for window resize optimisation
+	VkShaderModule vertexModule;
+	VkShaderModule fragmentModule;
+
 	static std::vector<char> readFileBytes(const char *path);
 
 	VkShaderModule createShaderModule(std::vector<char> source);
+
+	void createGraphicsPipeline();
+	void destroyGraphicsPipeline();
 
 public:
 	static Shader *FromSPIRVFile(VulkanApplication* app, 
@@ -63,6 +71,7 @@ public:
 	VkPipeline _getGraphicsPipeline();
 	VkPipelineLayout _getGraphicsPipelineLayout();
 	VkDescriptorSet _getNewDescriptorSet();
+	void _recreateGraphicsPipeline();
 
 	ShaderLayout getShaderLayout();
 };

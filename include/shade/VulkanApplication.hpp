@@ -11,6 +11,9 @@
 
 namespace Shade
 {
+// Forward declaration of shader
+class Shader;
+
 struct VulkanApplicationData
 {
     VkInstance instance;
@@ -56,5 +59,9 @@ public:
     {
         return &this->vulkanData;
     };
+
+	virtual void _registerShader(Shader* shader) = 0;
+	virtual void _unregisterShader(Shader* shader) = 0;
+	virtual std::vector<Shader*> _getShaders() = 0;
 };
 } // namespace Shade

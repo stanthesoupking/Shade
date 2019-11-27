@@ -84,9 +84,24 @@ void ShadeApplication::initWindow()
 {
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
-    glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+
+	if (this->info.windowResizable)
+	{
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
+	}
+	else
+	{
+		glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
+	}
 
     window = glfwCreateWindow(this->info.windowSize.width, this->info.windowSize.height, "Shade Application", nullptr, nullptr);
+	glfwSetWindowUserPointer(window, this);
+
+	// Setup callbacks
+	if (this->info.windowResizable)
+	{
+		glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
+	}
 }
 
 void ShadeApplication::initVulkan()
@@ -668,6 +683,52 @@ void ShadeApplication::createDescriptorPool()
     vkCreateDescriptorPool(vulkanData.device, &createInfo, nullptr, &vulkanData.descriptorPool);
 }
 
+void ShadeApplication::framebufferResizeCallback(GLFWwindow* window, int width, int height)
+{
+	ShadeApplication* app = (ShadeApplication*) glfwGetWindowUserPointer(window);
+	ShadeApplicationInfo* info = app->_getApplicationInfo();
+	info->windowSize = { 0, 0, (float)width, (float)height };
+
+	app->recreateSwapchain();
+}
+
+void ShadeApplication::recreateSwapchain()
+{
+	vkDeviceWaitIdle(vulkanData.device);
+
+	cleanupSwapchain();
+
+	createSwapchain();
+	createImageViews();
+	createRenderPass();
+
+	// Update shaders
+	for (auto shader : shaderRegistry)
+	{
+		shader->_recreateGraphicsPipeline();
+	}
+
+	createFramebuffers();
+	createCommandBuffers();
+}
+
+void ShadeApplication::cleanupSwapchain()
+{
+	for (size_t i = 0; i < vulkanData.swapChainFramebuffers.size(); i++) {
+		vkDestroyFramebuffer(vulkanData.device, vulkanData.swapChainFramebuffers[i], nullptr);
+	}
+
+	vkFreeCommandBuffers(vulkanData.device, vulkanData.commandPool, static_cast<uint32_t>(vulkanData.commandBuffers.size()), vulkanData.commandBuffers.data());
+
+	vkDestroyRenderPass(vulkanData.device, vulkanData.renderPass, nullptr);
+
+	for (size_t i = 0; i < vulkanData.swapChainImageViews.size(); i++) {
+		vkDestroyImageView(vulkanData.device, vulkanData.swapChainImageViews[i], nullptr);
+	}
+
+	vkDestroySwapchainKHR(vulkanData.device, vulkanData.swapChain, nullptr);
+}
+
 void ShadeApplication::renderStart()
 {
     // Get current image index
@@ -763,6 +824,11 @@ void ShadeApplication::setRenderClearColour(Colour c)
     this->info.clearColour = c;
 }
 
+Rect ShadeApplication::getWindowSize()
+{
+	return this->info.windowSize;
+}
+
 void ShadeApplication::renderMesh(IndexBuffer *indexBuffer, VertexBuffer *vertexBuffer, Material *material)
 {
     // Bind shader graphics pipeline
@@ -782,4 +848,34 @@ void ShadeApplication::renderMesh(IndexBuffer *indexBuffer, VertexBuffer *vertex
                             0, 1, &descriptorSet, 0, nullptr);
 
     vkCmdDrawIndexed(vulkanData.commandBuffers[vulkanData.currentImageIndex], indexBuffer->getElementCount(), 1, 0, 0, 0);
+}
+
+ShadeApplicationInfo* ShadeApplication::_getApplicationInfo()
+{
+	return &this->info;
+}
+
+void ShadeApplication::_registerShader(Shader* shader)
+{
+	shaderRegistry.push_back(shader);
+}
+
+void ShadeApplication::_unregisterShader(Shader* shader)
+{
+	int registrySize = shaderRegistry.size();
+	for (int i = 0; i < registrySize; i++)
+	{
+		if (shaderRegistry[i] == shader)
+		{
+			shaderRegistry.erase(shaderRegistry.begin() + i);
+			return;
+		}
+	}
+
+	throw std::runtime_error("Shade: Failed to unregister shader!");
+}
+
+std::vector<Shader*> ShadeApplication::_getShaders()
+{
+	return this->shaderRegistry;
 }

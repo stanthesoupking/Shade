@@ -14,6 +14,7 @@
 #include "./VertexBuffer.hpp"
 #include "./Rect.hpp"
 #include "./Colour.hpp"
+#include "./Shader.hpp"
 #include "./Shade.hpp"
 
 namespace Shade
@@ -21,6 +22,7 @@ namespace Shade
 struct ShadeApplicationInfo
 {
     Rect windowSize = {0, 0, 640, 480};
+	bool windowResizable = true;
     Colour clearColour = {0, 0, 0, 1};
 };
 
@@ -82,8 +84,17 @@ private:
     void createCommandBuffers();
     void createDescriptorPool();
 
+	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
+	void recreateSwapchain();
+	void cleanupSwapchain();
+
     void renderStart();
     void renderPresent();
+
+	/**
+	 * Keep track of loaded shaders for updating on window resize events.
+	 */
+	std::vector<Shader*> shaderRegistry;
 
 public:
     ShadeApplication();
@@ -100,7 +111,14 @@ public:
     virtual void destroy() = 0;
 
     void setRenderClearColour(Colour c);
+	
+	Rect getWindowSize();
 
     void renderMesh(IndexBuffer *indexBuffer, VertexBuffer *vertexBuffer, Material *material);
+
+	ShadeApplicationInfo* _getApplicationInfo();
+	void _registerShader(Shader* shader);
+	void _unregisterShader(Shader* shader);
+	std::vector<Shader*> _getShaders();
 };
 } // namespace Shade
