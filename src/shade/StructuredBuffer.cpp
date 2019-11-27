@@ -23,7 +23,13 @@ StructuredBuffer::~StructuredBuffer()
 
 void StructuredBuffer::setData(void *data, uint32_t count)
 {
-	Buffer::setData(layout.alignData(data, count), layout.getStride(), count);
+	// Align data to meet Vulkan specifications
+	void *alignedData = layout.alignData(data, count);
+
+	Buffer::setData(alignedData, layout.getStride(), count);
+
+	// Free aligned data
+	free(alignedData);
 }
 
 // Structured Buffer Layout Implementation
@@ -135,11 +141,12 @@ uint32_t StructuredBufferLayout::getStride()
 
 	for (const auto entry : layout)
 	{
-		stride += getAlignedBufferVariableTypeSize(entry.type, 
-			getBufferVariableTypeAlignment(entry.type));
+		stride += getAlignedBufferVariableTypeSize(entry.type,
+												   getBufferVariableTypeAlignment(entry.type));
 	}
 
-	return ceil(stride / (float)largestAlignment) * largestAlignment;;
+	return ceil(stride / (float)largestAlignment) * largestAlignment;
+	;
 }
 
 uint32_t StructuredBufferLayout::getUnalignedStructStride()
@@ -149,7 +156,7 @@ uint32_t StructuredBufferLayout::getUnalignedStructStride()
 	for (const auto entry : layout)
 	{
 		stride += getAlignedBufferVariableTypeSize(entry.type,
-			getBufferVariableTypeAlignment(entry.type));
+												   getBufferVariableTypeAlignment(entry.type));
 	}
 
 	return stride;
@@ -204,13 +211,12 @@ void *StructuredBufferLayout::alignData(void *data, uint32_t count)
 			uint32_t uSize = getBufferVariableTypeSize(entry.type);
 			uint32_t aSize = getAlignedBufferVariableTypeSize(entry.type, eAlignment);
 			uint32_t sizeDiff = aSize - uSize;
-            
-            // Copy original data
-            memcpy((char *)newData + newDataPos, (char *)data + dataPos, uSize);
 
-            // Fill empty bytes to align data
-            memset((char *)newData + newDataPos + uSize, 0x00, sizeDiff);
+			// Copy original data
+			memcpy((char *)newData + newDataPos, (char *)data + dataPos, uSize);
 
+			// Fill empty bytes to align data
+			memset((char *)newData + newDataPos + uSize, 0x00, sizeDiff);
 
 			// Move data position forward
 			dataPos += uSize;
@@ -220,7 +226,7 @@ void *StructuredBufferLayout::alignData(void *data, uint32_t count)
 		}
 
 		// Fill empty bytes to align struct
-		memset((char*)newData + newDataPos, 0x00, structSizeDiff);
+		memset((char *)newData + newDataPos, 0x00, structSizeDiff);
 		newDataPos += structSizeDiff;
 	}
 
