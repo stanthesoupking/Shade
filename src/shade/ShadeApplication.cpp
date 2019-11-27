@@ -686,10 +686,7 @@ void ShadeApplication::createDescriptorPool()
 void ShadeApplication::framebufferResizeCallback(GLFWwindow* window, int width, int height)
 {
 	ShadeApplication* app = (ShadeApplication*) glfwGetWindowUserPointer(window);
-	ShadeApplicationInfo* info = app->_getApplicationInfo();
-	info->windowSize = { 0, 0, (float)width, (float)height };
-
-	app->recreateSwapchain();
+	app->setWindowSize({ 0, 0, (float)width, (float) height });
 }
 
 void ShadeApplication::recreateSwapchain()
@@ -822,6 +819,15 @@ void ShadeApplication::renderPresent()
 void ShadeApplication::setRenderClearColour(Colour c)
 {
     this->info.clearColour = c;
+}
+
+void ShadeApplication::setWindowSize(Rect windowSize)
+{
+	if ((windowSize.height > 1) | (windowSize.width > 1))
+	{
+		info.windowSize = windowSize;
+		this->recreateSwapchain();
+	}
 }
 
 Rect ShadeApplication::getWindowSize()

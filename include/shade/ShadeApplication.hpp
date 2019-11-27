@@ -112,6 +112,7 @@ public:
 
     void setRenderClearColour(Colour c);
 	
+	void setWindowSize(Rect windowSize);
 	Rect getWindowSize();
 
     void renderMesh(IndexBuffer *indexBuffer, VertexBuffer *vertexBuffer, Material *material);
