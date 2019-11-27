@@ -63,8 +63,6 @@ void DemoApplication::init()
     basicShader = Shader::FromSPIRVFile(this, shaderLayout, "../assets/shaders/vert.spv", "../assets/shaders/frag.spv");
 
 	basicMaterial = new Material(this, basicShader, { uniformBuffer, florenceTexture });
-
-    time = 0;
 }
 
 void DemoApplication::destroy()
