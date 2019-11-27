@@ -19,6 +19,13 @@
 
 namespace Shade
 {
+
+struct ShadeApplicationFrameData
+{
+    float timeSinceStartup; // Time in seconds since application initialised
+    float deltaTime; // Delta time since last frame
+};
+
 struct ShadeApplicationInfo
 {
     Rect windowSize = {0, 0, 640, 480};
@@ -50,6 +57,11 @@ private:
     ShadeApplicationInfo info;
 
     GLFWwindow *window;
+
+    ShadeApplicationFrameData previouseFrameData {
+        0.0f, // Time since startup
+        0.0f // Placeholder delta time
+    };
 
     const std::vector<const char *> validationLayers = {
         "VK_LAYER_KHRONOS_validation"};
@@ -88,6 +100,8 @@ private:
 	void recreateSwapchain();
 	void cleanupSwapchain();
 
+    ShadeApplicationFrameData getNextFrameData();
+
     void renderStart();
     void renderPresent();
 
@@ -106,7 +120,7 @@ public:
     // Overridable methods:
     virtual ShadeApplicationInfo preInit() = 0;
     virtual void init() = 0;
-    virtual void update() = 0;
+    virtual void update(ShadeApplicationFrameData frameData) = 0;
     virtual void render() = 0;
     virtual void destroy() = 0;
 

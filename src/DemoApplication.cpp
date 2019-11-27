@@ -79,20 +79,13 @@ void DemoApplication::destroy()
 	delete florenceTexture;
 }
 
-void DemoApplication::update()
+void DemoApplication::update(ShadeApplicationFrameData frameData)
 {
-    time++;
-
-    if (time > 1000)
-    {
-        time = 0;
-    }
-
 	// Get current window size
 	Rect windowSize = getWindowSize();
 
 	// Calculate mvp
-	glm::mat4 model = glm::rotate(glm::mat4(1.0f), (time / 1000.0f) * glm::radians(360.0f), glm::vec3(0.0f, 0.0f, 1.0f));
+	glm::mat4 model = glm::rotate(glm::mat4(1.0f), (frameData.timeSinceStartup / 10.0f) * glm::radians(360.0f), glm::vec3(0.0f, 0.0f, 1.0f));
 	glm::mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), windowSize.width / windowSize.height, 0.1f, 10.0f);
 	uniformData.mvp = projection * view * model;

@@ -34,11 +34,10 @@ private:
     std::vector<int> indices;
 	UniformData uniformData;
 
-    int time;
 public:
     ShadeApplicationInfo preInit();
     void init();
-    void update();
+    void update(ShadeApplicationFrameData frameData);
     void render();
     void destroy();
 };
