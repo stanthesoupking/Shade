@@ -34,7 +34,7 @@ uint32_t Buffer::findMemoryType(uint32_t typeFilter,
         }
     }
 
-    throw std::runtime_error("Failed to find suitable memory type!");
+    throw std::runtime_error("Shade: Failed to find suitable memory type!");
 }
 
 void Buffer::createBuffer(void *data, uint32_t stride, uint32_t count)
@@ -61,6 +61,10 @@ void Buffer::createBuffer(void *data, uint32_t stride, uint32_t count)
     {
         createInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     }
+	else if (bufferType == TRANSFER)
+	{
+		createInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+	}
 
     createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 

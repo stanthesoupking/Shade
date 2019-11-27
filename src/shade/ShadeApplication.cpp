@@ -194,8 +194,8 @@ bool ShadeApplication::isDeviceSuitable(VkPhysicalDevice device)
     VkPhysicalDeviceProperties deviceProperties;
     vkGetPhysicalDeviceProperties(device, &deviceProperties);
 
-    VkPhysicalDeviceFeatures deviceFeatures;
-    vkGetPhysicalDeviceFeatures(device, &deviceFeatures);
+    VkPhysicalDeviceFeatures supportedFeatures;
+    vkGetPhysicalDeviceFeatures(device, &supportedFeatures);
 
     QueueFamilyIndices indices = findQueueFamilies(device);
 
@@ -211,7 +211,7 @@ bool ShadeApplication::isDeviceSuitable(VkPhysicalDevice device)
                             !swapChainSupport.presentModes.empty();
     }
 
-    return indices.isComplete() && extensionsSupported && swapChainAdequate;
+    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;;
 }
 
 QueueFamilyIndices ShadeApplication::findQueueFamilies(VkPhysicalDevice device)
@@ -309,7 +309,8 @@ SwapChainSupportDetails ShadeApplication::querySwapChainSupport(VkPhysicalDevice
 void ShadeApplication::createLogicalDevice()
 {
 
-    VkPhysicalDeviceFeatures deviceFeatures = {};
+	VkPhysicalDeviceFeatures deviceFeatures = {};
+	deviceFeatures.samplerAnisotropy = VK_TRUE;
 
     VkDeviceCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO;
@@ -652,14 +653,16 @@ void ShadeApplication::createCommandBuffers()
 void ShadeApplication::createDescriptorPool()
 {
     VkDescriptorPoolSize poolSizes[] = {
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1024}};
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1024},
+		{VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1024}
+	};
 
     VkDescriptorPoolCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     createInfo.pNext = nullptr;
     createInfo.flags = 0;
-    createInfo.maxSets = 1024; // PLACEHOLDER VALUE, should probs use device limits
-    createInfo.poolSizeCount = 1;
+    createInfo.maxSets = 1024; // PLACEHOLDER VALUE, research this
+    createInfo.poolSizeCount = 2;
     createInfo.pPoolSizes = poolSizes;
 
     vkCreateDescriptorPool(vulkanData.device, &createInfo, nullptr, &vulkanData.descriptorPool);

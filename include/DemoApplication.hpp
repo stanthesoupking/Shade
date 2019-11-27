@@ -11,8 +11,8 @@ using namespace Shade;
 
 struct Vertex
 {
-    glm::vec2 pos;
-	glm::vec3 inColour;
+    glm::vec2 inPosition;
+	glm::vec2 inTexCoord;
 };
 
 struct UniformData
@@ -26,6 +26,7 @@ private:
     VertexBuffer* vertexBuffer;
     IndexBuffer* indexBuffer;
     StructuredUniformBuffer* uniformBuffer;
+    UniformTexture* florenceTexture;
     Shader* basicShader;
 	Material* basicMaterial;
 

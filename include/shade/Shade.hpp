@@ -19,6 +19,7 @@
 #include "./StructuredUniformBuffer.hpp"
 #include "./IndexBuffer.hpp"
 #include "./VertexBuffer.hpp"
+#include "./UniformTexture.hpp"
 #include "./Shader.hpp"
 #include "./Material.hpp"
 #include "./ShadeApplication.hpp"

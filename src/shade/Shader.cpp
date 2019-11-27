@@ -76,9 +76,25 @@ Shader::Shader(VulkanApplication* app, ShaderLayout shaderLayout,
 
 			VkDescriptorSetLayoutBinding uniformLayoutBinding = {};
 			uniformLayoutBinding.binding = entry.binding;
-			uniformLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	
+			if (std::holds_alternative<StructuredBufferLayout>(entry.layout))
+			{
+				uniformLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+			}
+			else if (std::holds_alternative<UniformTextureLayout>(entry.layout))
+			{
+				uniformLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+			}
+			
 			uniformLayoutBinding.descriptorCount = 1;
-			uniformLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+			if (entry.stage == ShaderStage::VERTEX)
+			{
+				uniformLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+			}
+			else if (entry.stage == ShaderStage::FRAGMENT)
+			{
+				uniformLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+			}
 			uniformLayoutBinding.pImmutableSamplers = nullptr;
 
 			bindings[i] = uniformLayoutBinding;

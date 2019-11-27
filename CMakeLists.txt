@@ -42,11 +42,13 @@ find_package(vulkan REQUIRED)
 file(GLOB ShadeApp_SRC
     "src/*.cpp"
     "src/*/*.cpp"
+	"src/*/*/*.cpp"
 )
 
 file(GLOB ShadeApp_INC
     "include/*.hpp"
     "include/*/*.hpp"
+	"include/*/*/*.hpp"
 )
 
 ## Note: May use in future for GLSL integration

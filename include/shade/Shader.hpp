@@ -6,14 +6,22 @@
 #include <vulkan/vulkan.h>
 
 #include "./VulkanApplication.hpp"
+#include "./UniformTexture.hpp"
 #include "./StructuredBuffer.hpp"
 
 namespace Shade
 {
+enum class ShaderStage
+{
+	VERTEX,
+	FRAGMENT
+};
+
 struct UniformLayoutEntry
 {
 	uint32_t binding;
-	std::variant<StructuredBufferLayout> layout;
+	ShaderStage stage;
+	std::variant<StructuredBufferLayout, UniformTextureLayout> layout;
 };
 
 class ShaderLayout
@@ -54,7 +62,7 @@ public:
 
 	VkPipeline _getGraphicsPipeline();
 	VkPipelineLayout _getGraphicsPipelineLayout();
-	VkDescriptorSet Shader::_getNewDescriptorSet();
+	VkDescriptorSet _getNewDescriptorSet();
 
 	ShaderLayout getShaderLayout();
 };
