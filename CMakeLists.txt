@@ -31,7 +31,6 @@ endif()
 FetchContent_Declare(
 	glm
 	GIT_REPOSITORY https://github.com/g-truc/glm
-	
 )
 
 set(GLM_TEST_ENABLE OFF CACHE BOOL "" FORCE)
@@ -39,13 +38,13 @@ FetchContent_MakeAvailable(glm)
 
 find_package(vulkan REQUIRED)
 
-file(GLOB ShadeApp_SRC
+file(GLOB Shade_SRC
     "src/*.cpp"
     "src/*/*.cpp"
 	"src/*/*/*.cpp"
 )
 
-file(GLOB ShadeApp_INC
+file(GLOB Shade_INC
     "include/*.hpp"
     "include/*/*.hpp"
 	"include/*/*/*.hpp"
@@ -80,5 +79,8 @@ file(GLOB ShadeApp_INC
 #FetchContent_MakeAvailable(shaderc)
 #FetchContent_MakeAvailable(shaderc)
 
-add_executable(ShadeApp ${ShadeApp_SRC} ${ShadeApp_INC})
-target_link_libraries(ShadeApp glfw glm Vulkan::Vulkan)
+add_library(Shade ${Shade_SRC} ${Shade_INC})
+target_link_libraries(Shade glfw glm Vulkan::Vulkan)
+
+# Example Programs:
+add_subdirectory("examples" "${CMAKE_BINARY_DIR}/examples")

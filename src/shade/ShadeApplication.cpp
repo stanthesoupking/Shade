@@ -18,6 +18,10 @@ ShadeApplication::~ShadeApplication()
     vkDestroySemaphore(vulkanData.device, vulkanData.imageAvailableSemaphore, nullptr);
     vkDestroySemaphore(vulkanData.device, vulkanData.renderFinishedSemaphore, nullptr);
 
+    vkDestroyImage(vulkanData.device, vulkanData.depthImage, nullptr);
+    vkDestroyImageView(vulkanData.device, vulkanData.depthImageView, nullptr);
+    vkFreeMemory(vulkanData.device, vulkanData.depthImageMemory, nullptr);
+
     vkDestroyRenderPass(vulkanData.device, vulkanData.renderPass, nullptr);
 
     vkDestroyCommandPool(vulkanData.device, vulkanData.commandPool, nullptr);
@@ -82,8 +86,7 @@ ShadeApplicationFrameData ShadeApplication::getNextFrameData()
 
     return {
         timeSinceStartup,
-        deltaTime
-    };
+        deltaTime};
 }
 
 void ShadeApplication::initSystem()
@@ -124,10 +127,11 @@ void ShadeApplication::initVulkan()
     createLogicalDevice();
     createSwapchain();
     createImageViews();
+    createCommandPool();
+    createDepthResources();
     createRenderPass();
     createFramebuffers();
     createSemaphores();
-    createCommandPool();
     createCommandBuffers();
     createDescriptorPool();
 }
@@ -570,17 +574,25 @@ void ShadeApplication::createRenderPass()
     colorAttachmentRef.attachment = 0;
     colorAttachmentRef.layout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL;
 
+    VkAttachmentDescription depthAttachment = {};
+    depthAttachment.format = vulkanData.depthImageFormat;
+    depthAttachment.samples = VK_SAMPLE_COUNT_1_BIT;
+    depthAttachment.loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+    depthAttachment.storeOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depthAttachment.stencilLoadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+    depthAttachment.stencilStoreOp = VK_ATTACHMENT_STORE_OP_DONT_CARE;
+    depthAttachment.initialLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    depthAttachment.finalLayout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
+    VkAttachmentReference depthAttachmentRef = {};
+    depthAttachmentRef.attachment = 1;
+    depthAttachmentRef.layout = VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL;
+
     VkSubpassDescription subpass = {};
     subpass.pipelineBindPoint = VK_PIPELINE_BIND_POINT_GRAPHICS;
     subpass.colorAttachmentCount = 1;
     subpass.pColorAttachments = &colorAttachmentRef;
-
-    VkRenderPassCreateInfo renderPassInfo = {};
-    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
-    renderPassInfo.attachmentCount = 1;
-    renderPassInfo.pAttachments = &colorAttachment;
-    renderPassInfo.subpassCount = 1;
-    renderPassInfo.pSubpasses = &subpass;
+    subpass.pDepthStencilAttachment = &depthAttachmentRef;
 
     VkSubpassDependency dependency = {};
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
@@ -593,9 +605,20 @@ void ShadeApplication::createRenderPass()
     dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
                                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
+    std::array<VkClearValue, 2> clearValues = {};
+    clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
+    clearValues[1].depthStencil = {1.0f, 0};
+
+    std::array<VkAttachmentDescription, 2> attachments = {colorAttachment, depthAttachment};
+    VkRenderPassCreateInfo renderPassInfo = {};
+    renderPassInfo.sType = VK_STRUCTURE_TYPE_RENDER_PASS_CREATE_INFO;
+    renderPassInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+    renderPassInfo.pAttachments = attachments.data();
+    renderPassInfo.subpassCount = 1;
+    renderPassInfo.pSubpasses = &subpass;
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
-
+    
     if (vkCreateRenderPass(vulkanData.device, &renderPassInfo, nullptr,
                            &vulkanData.renderPass) != VK_SUCCESS)
     {
@@ -609,14 +632,15 @@ void ShadeApplication::createFramebuffers()
 
     for (size_t i = 0; i < vulkanData.swapChainImageViews.size(); i++)
     {
-        VkImageView attachments[] = {vulkanData.swapChainImageViews[i]};
+        std::array<VkImageView, 2> attachments = {
+            vulkanData.swapChainImageViews[i],
+            vulkanData.depthImageView};
 
         VkFramebufferCreateInfo framebufferInfo = {};
-        framebufferInfo.sType =
-            VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
+        framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
         framebufferInfo.renderPass = vulkanData.renderPass;
-        framebufferInfo.attachmentCount = 1;
-        framebufferInfo.pAttachments = attachments;
+        framebufferInfo.attachmentCount = static_cast<uint32_t>(attachments.size());
+        framebufferInfo.pAttachments = attachments.data();
         framebufferInfo.width = vulkanData.swapChainExtent.width;
         framebufferInfo.height = vulkanData.swapChainExtent.height;
         framebufferInfo.layers = 1;
@@ -695,6 +719,26 @@ void ShadeApplication::createDescriptorPool()
     vkCreateDescriptorPool(vulkanData.device, &createInfo, nullptr, &vulkanData.descriptorPool);
 }
 
+void ShadeApplication::createDepthResources()
+{
+    // Create depth image
+    vulkanData.depthImageFormat = VK_FORMAT_D32_SFLOAT; // Widely supported format
+
+    _createImage(vulkanData.swapChainExtent.width,
+                 vulkanData.swapChainExtent.height, vulkanData.depthImageFormat,
+                 VK_IMAGE_TILING_OPTIMAL,
+                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
+                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+                 vulkanData.depthImage, vulkanData.depthImageMemory);
+
+    _createImageView(vulkanData.depthImage, vulkanData.depthImageFormat,
+                     VK_IMAGE_ASPECT_DEPTH_BIT, vulkanData.depthImageView);
+
+    _transitionImageLayout(vulkanData.depthImage, vulkanData.depthImageFormat,
+                           VK_IMAGE_LAYOUT_UNDEFINED,
+                           VK_IMAGE_LAYOUT_DEPTH_STENCIL_ATTACHMENT_OPTIMAL);
+}
+
 void ShadeApplication::framebufferResizeCallback(GLFWwindow *window, int width, int height)
 {
     ShadeApplication *app = (ShadeApplication *)glfwGetWindowUserPointer(window);
@@ -769,9 +813,12 @@ void ShadeApplication::renderStart()
     renderPassInfo.renderArea.offset = {0, 0};
     renderPassInfo.renderArea.extent = vulkanData.swapChainExtent;
 
-    VkClearValue clearColor = {info.clearColour.r, info.clearColour.g, info.clearColour.b, info.clearColour.a};
-    renderPassInfo.clearValueCount = 1;
-    renderPassInfo.pClearValues = &clearColor;
+    std::array<VkClearValue, 2> clearValues = {};
+    clearValues[0].color = {info.clearColour.r, info.clearColour.g, info.clearColour.b, info.clearColour.a};
+    clearValues[1].depthStencil = {1.0f, 0};
+
+    renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
+    renderPassInfo.pClearValues = clearValues.data();
 
     // Begin render pass
     vkCmdBeginRenderPass(vulkanData.commandBuffers[vulkanData.currentImageIndex], &renderPassInfo,
@@ -849,8 +896,11 @@ Rect ShadeApplication::getWindowSize()
     return this->info.windowSize;
 }
 
-void ShadeApplication::renderMesh(IndexBuffer *indexBuffer, VertexBuffer *vertexBuffer, Material *material)
+void ShadeApplication::renderMesh(Mesh *mesh, Material *material)
 {
+    IndexBuffer *indexBuffer = mesh->getIndexBuffer();
+    VertexBuffer *vertexBuffer = mesh->getVertexBuffer();
+
     // Bind shader graphics pipeline
     vkCmdBindPipeline(vulkanData.commandBuffers[vulkanData.currentImageIndex],
                       VK_PIPELINE_BIND_POINT_GRAPHICS, material->getShader()->_getGraphicsPipeline());

@@ -18,12 +18,12 @@ void DemoApplication::init()
         {{"mvp", MAT4}});
 
     StructuredBufferLayout vertexLayout = StructuredBufferLayout(
-		{{"inPosition", VEC2},
-		{"inTexCoord", VEC2}});
+		{{"inTexCoord", VEC2},
+		{"inPosition", VEC3}});
 
 	std::cout << "Loading Florence texture..." << std::endl;
 
-	florenceTexture = new UniformTexture(this, "../assets/textures/florence.png");
+	florenceTexture = new UniformTexture(this, "assets/textures/florence.png");
 	
 	ShaderLayout shaderLayout = {
 		{
@@ -33,22 +33,19 @@ void DemoApplication::init()
 		vertexLayout
 	};
 
-    std::cout << "Creating vertex buffer..." << std::endl;
+    std::cout << "Creating mesh..." << std::endl;
 
 	vertices = {
-		{{0.5f, -0.5f}, {0.0f, 0.0f}},
-		{{0.5f, 0.5f}, {0.0f, 1.0f}},
-		{{-0.5f, 0.5f}, {1.0f, 1.0f}},
-		{{-0.5f, -0.5f}, {1.0f, 0.0f}} };
-
-    vertexBuffer = new VertexBuffer(this, vertexLayout, vertices.data(), vertices.size());
-
-    std::cout << "Creating index buffer..." << std::endl;
+		{{0.0f, 0.0f}, {0.5f, -0.5f, 0.0f}},
+		{{0.0f, 1.0f}, {0.5f, 0.5f, 0.0f}},
+		{{1.0f, 1.0f}, {-0.5f, 0.5f, 0.0f}},
+		{{1.0f, 0.0f}, {-0.5f, -0.5f, 0.0f}}
+	};
 
     indices = {
-        2, 1, 0, 3, 2, 0};
+        0, 1, 2, 0, 2, 3};
 
-    indexBuffer = new IndexBuffer(this, indices);
+    mesh = new Mesh(this, indices, vertices.data(), vertexLayout, vertices.size());
 
     std::cout << "Creating uniform buffer..." << std::endl;
 
@@ -60,7 +57,7 @@ void DemoApplication::init()
 
     std::cout << "Loading shader..." << std::endl;
 
-    basicShader = Shader::FromSPIRVFile(this, shaderLayout, "../assets/shaders/vert.spv", "../assets/shaders/frag.spv");
+    basicShader = Shader::loadFromSPIRV(this, shaderLayout, "assets/shaders/vert.spv", "assets/shaders/frag.spv");
 
 	basicMaterial = new Material(this, basicShader, { uniformBuffer, florenceTexture });
 }
@@ -71,8 +68,7 @@ void DemoApplication::destroy()
     delete basicMaterial;
     delete basicShader;
 
-    delete vertexBuffer;
-    delete indexBuffer;
+    delete mesh;
     delete uniformBuffer;
 	delete florenceTexture;
 }
@@ -93,5 +89,5 @@ void DemoApplication::update(ShadeApplicationFrameData frameData)
 
 void DemoApplication::render()
 {
-    renderMesh(indexBuffer, vertexBuffer, basicMaterial);
+    renderMesh(mesh, basicMaterial);
 }

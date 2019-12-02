@@ -27,10 +27,6 @@ private:
 	VkImageView textureImageView;
 	VkSampler textureSampler;
 
-	uint32_t findMemoryType(uint32_t typeFilter,
-		VkMemoryPropertyFlags properties);
-
-	void createImageView(VkImage image, VkFormat format);
 	void createTextureSampler();
 public:
 	UniformTexture(VulkanApplication* app, std::string path);

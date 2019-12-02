@@ -5,7 +5,7 @@
 
 using namespace Shade;
 
-Shader *Shader::FromSPIRVFile(VulkanApplication* app,
+Shader *Shader::loadFromSPIRV(VulkanApplication *app,
 							  ShaderLayout shaderLayout,
 							  const char *vertPath, const char *fragPath)
 {
@@ -15,7 +15,7 @@ Shader *Shader::FromSPIRVFile(VulkanApplication* app,
 		readFileBytes(fragPath));
 }
 
-Shader::Shader(VulkanApplication* app, ShaderLayout shaderLayout,
+Shader::Shader(VulkanApplication *app, ShaderLayout shaderLayout,
 			   std::vector<char> vertSource, std::vector<char> fragSource)
 {
 	this->app = app;
@@ -137,7 +137,7 @@ void Shader::createGraphicsPipeline()
 	fragShaderStageInfo.pName = "main";
 
 	VkPipelineShaderStageCreateInfo shaderStages[] =
-	{ vertShaderStageInfo, fragShaderStageInfo };
+		{vertShaderStageInfo, fragShaderStageInfo};
 
 	// Create vertex input binding description
 
@@ -195,7 +195,6 @@ void Shader::createGraphicsPipeline()
 			bindings[i] = uniformLayoutBinding;
 		}
 
-
 		VkDescriptorSetLayoutCreateInfo layoutInfo = {};
 		layoutInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO;
 		layoutInfo.bindingCount = bindings.size();
@@ -221,7 +220,7 @@ void Shader::createGraphicsPipeline()
 	viewport.maxDepth = 1.0f;
 
 	VkRect2D scissor = {};
-	scissor.offset = { 0, 0 };
+	scissor.offset = {0, 0};
 	scissor.extent = vulkanData->swapChainExtent;
 
 	VkPipelineViewportStateCreateInfo viewportState = {};
@@ -240,7 +239,7 @@ void Shader::createGraphicsPipeline()
 	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
-	rasterizer.frontFace = VK_FRONT_FACE_COUNTER_CLOCKWISE;
+	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
 
 	rasterizer.depthBiasEnable = VK_FALSE;
 	rasterizer.depthBiasConstantFactor = 0.0f;
@@ -260,9 +259,9 @@ void Shader::createGraphicsPipeline()
 
 	VkPipelineColorBlendAttachmentState colorBlendAttachment = {};
 	colorBlendAttachment.colorWriteMask = VK_COLOR_COMPONENT_R_BIT |
-		VK_COLOR_COMPONENT_G_BIT |
-		VK_COLOR_COMPONENT_B_BIT |
-		VK_COLOR_COMPONENT_A_BIT;
+										  VK_COLOR_COMPONENT_G_BIT |
+										  VK_COLOR_COMPONENT_B_BIT |
+										  VK_COLOR_COMPONENT_A_BIT;
 	colorBlendAttachment.blendEnable = VK_TRUE;
 	colorBlendAttachment.srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA;
 	colorBlendAttachment.dstColorBlendFactor =
@@ -302,10 +301,23 @@ void Shader::createGraphicsPipeline()
 	pipelineLayoutInfo.pPushConstantRanges = nullptr;
 
 	if (vkCreatePipelineLayout(vulkanData->device, &pipelineLayoutInfo, nullptr,
-		&graphicsPipelineLayout) != VK_SUCCESS)
+							   &graphicsPipelineLayout) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Shade: Failed to create pipeline layout!");
 	}
+
+	// Enable depth stencil
+	VkPipelineDepthStencilStateCreateInfo depthStencil = {};
+	depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
+	depthStencil.depthTestEnable = VK_TRUE;
+	depthStencil.depthWriteEnable = VK_TRUE;
+	depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
+	depthStencil.depthBoundsTestEnable = VK_FALSE;
+	depthStencil.minDepthBounds = 0.0f; // Optional
+	depthStencil.maxDepthBounds = 1.0f; // Optional
+	depthStencil.stencilTestEnable = VK_FALSE;
+	depthStencil.front = {}; // Optional
+	depthStencil.back = {};  // Optional
 
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -316,7 +328,7 @@ void Shader::createGraphicsPipeline()
 	pipelineInfo.pViewportState = &viewportState;
 	pipelineInfo.pRasterizationState = &rasterizer;
 	pipelineInfo.pMultisampleState = &multisampling;
-	pipelineInfo.pDepthStencilState = nullptr;
+	pipelineInfo.pDepthStencilState = &depthStencil;
 	pipelineInfo.pColorBlendState = &colorBlending;
 	pipelineInfo.pDynamicState = nullptr;
 	pipelineInfo.layout = graphicsPipelineLayout;
@@ -326,8 +338,8 @@ void Shader::createGraphicsPipeline()
 	pipelineInfo.basePipelineIndex = -1;
 
 	if (vkCreateGraphicsPipelines(vulkanData->device, VK_NULL_HANDLE, 1,
-		&pipelineInfo, nullptr,
-		&graphicsPipeline) != VK_SUCCESS)
+								  &pipelineInfo, nullptr,
+								  &graphicsPipeline) != VK_SUCCESS)
 	{
 		throw std::runtime_error("Shade: Failed to create graphics pipeline!");
 	}
@@ -355,5 +367,4 @@ ShaderLayout::ShaderLayout(std::vector<UniformLayoutEntry> uniformsLayout, Struc
 
 ShaderLayout::~ShaderLayout()
 {
-
 }

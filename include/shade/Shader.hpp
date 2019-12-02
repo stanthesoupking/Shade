@@ -60,7 +60,7 @@ private:
 	void destroyGraphicsPipeline();
 
 public:
-	static Shader *FromSPIRVFile(VulkanApplication* app, 
+	static Shader *loadFromSPIRV(VulkanApplication* app, 
 								 ShaderLayout shaderLayout,
 								 const char *vertPath, const char *fragPath);
 

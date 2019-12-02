@@ -11,8 +11,8 @@ using namespace Shade;
 
 struct Vertex
 {
-    glm::vec2 inPosition;
 	glm::vec2 inTexCoord;
+    glm::vec3 inPosition;
 };
 
 struct UniformData
@@ -23,8 +23,7 @@ struct UniformData
 class DemoApplication: public ShadeApplication
 {
 private:
-    VertexBuffer* vertexBuffer;
-    IndexBuffer* indexBuffer;
+    Mesh* mesh;
     StructuredUniformBuffer* uniformBuffer;
     UniformTexture* florenceTexture;
     Shader* basicShader;

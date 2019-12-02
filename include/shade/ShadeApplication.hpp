@@ -15,6 +15,7 @@
 #include "./Rect.hpp"
 #include "./Colour.hpp"
 #include "./Shader.hpp"
+#include "./Mesh.hpp"
 #include "./Shade.hpp"
 
 namespace Shade
@@ -95,6 +96,7 @@ private:
     void createCommandPool();
     void createCommandBuffers();
     void createDescriptorPool();
+    void createDepthResources();
 
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 	void recreateSwapchain();
@@ -129,7 +131,7 @@ public:
 	void setWindowSize(Rect windowSize);
 	Rect getWindowSize();
 
-    void renderMesh(IndexBuffer *indexBuffer, VertexBuffer *vertexBuffer, Material *material);
+    void renderMesh(Mesh* mesh, Material *material);
 
 	ShadeApplicationInfo* _getApplicationInfo();
 	void _registerShader(Shader* shader);
