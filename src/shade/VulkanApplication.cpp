@@ -1,5 +1,7 @@
 #include "shade/VulkanApplication.hpp"
 
+#include <iostream>
+
 using namespace Shade;
 
 uint32_t VulkanApplication::_findMemoryType(uint32_t typeFilter,
