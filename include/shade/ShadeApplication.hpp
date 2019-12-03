@@ -25,8 +25,12 @@ namespace Shade
 
 struct Mouse
 {
-    glm::vec2 position;
-    glm::vec2 movement; // Mouse movement since last frame
+    glm::vec2 position; // Normalised mouse position
+    glm::vec2 movement; // Normalised mouse movement since last frame
+
+    glm::vec2 pixelPosition; // Mouse position in pixels
+    glm::vec2 pixelMovement; // Mouse movement in pixels
+
     bool leftButtonPressed;
     bool rightButtonPressed;
     bool middleButtonPressed;
@@ -136,6 +140,7 @@ struct ShadeApplicationInfo
     Rect windowSize = {0, 0, 640, 480};
 	bool windowResizable = true;
     bool windowFullscreen = false;
+    bool mouseLock = false;
     Colour clearColour = {0, 0, 0, 1};
 };
 
@@ -218,6 +223,8 @@ private:
 
     void updateMouseData();
 
+    bool running;
+
 	/**
 	 * Keep track of loaded shaders for updating on window resize events.
 	 */
@@ -228,6 +235,9 @@ public:
 
     // Start the application and enter main loop
     void start();
+
+    // Exit the application
+    void exit();
 
     // Overridable methods:
     virtual ShadeApplicationInfo preInit() = 0;
@@ -244,6 +254,9 @@ public:
     void setWindowTitle(std::string windowTitle);
     std::string getWindowTitle();
 
+    void setMouseLock(bool mouseLock);
+    bool getMouseLock();
+
     void renderMesh(Mesh* mesh, Material *material);
 
 	ShadeApplicationInfo* _getApplicationInfo();
@@ -255,5 +268,6 @@ public:
     bool getKeyReleased(Key key);
 
     Mouse getMouse();
+
 };
 } // namespace Shade

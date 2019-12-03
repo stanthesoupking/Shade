@@ -62,7 +62,8 @@ void ShadeApplication::start()
     updateMouseData();
 
     // Enter main loop
-    while (!glfwWindowShouldClose(window))
+    running = true;
+    while (!glfwWindowShouldClose(window) && running)
     {
         glfwPollEvents();
 
@@ -81,6 +82,11 @@ void ShadeApplication::start()
     vkDeviceWaitIdle(vulkanData.device);
 
     this->destroy();
+}
+
+void ShadeApplication::exit()
+{
+    this->running = false;
 }
 
 ShadeApplicationFrameData ShadeApplication::getNextFrameData()
@@ -114,14 +120,14 @@ void ShadeApplication::initWindow()
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     }
 
-    GLFWmonitor* monitor;
+    GLFWmonitor *monitor;
     // Check if window should be fullscreen
     if (this->info.windowFullscreen)
     {
         monitor = glfwGetPrimaryMonitor();
 
         // Match window properties with the monitor's video mode
-        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        const GLFWvidmode *mode = glfwGetVideoMode(monitor);
         glfwWindowHint(GLFW_RED_BITS, mode->redBits);
         glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
         glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
@@ -134,7 +140,7 @@ void ShadeApplication::initWindow()
     {
         monitor = nullptr;
     }
-    
+
     window = glfwCreateWindow(this->info.windowSize.width,
                               this->info.windowSize.height,
                               this->info.windowTitle.c_str(), monitor, nullptr);
@@ -146,6 +152,9 @@ void ShadeApplication::initWindow()
     {
         glfwSetFramebufferSizeCallback(window, framebufferResizeCallback);
     }
+
+    // Set initial mouse lock value
+    setMouseLock(this->info.mouseLock);
 }
 
 void ShadeApplication::initVulkan()
@@ -947,6 +956,25 @@ std::string ShadeApplication::getWindowTitle()
     return this->info.windowTitle;
 }
 
+void ShadeApplication::setMouseLock(bool mouseLock)
+{
+    this->info.mouseLock = mouseLock;
+
+    if (mouseLock)
+    {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_DISABLED);
+    }
+    else
+    {
+        glfwSetInputMode(window, GLFW_CURSOR, GLFW_CURSOR_NORMAL);
+    }
+}
+
+bool ShadeApplication::getMouseLock()
+{
+    return this->info.mouseLock;
+}
+
 void ShadeApplication::renderMesh(Mesh *mesh, Material *material)
 {
     IndexBuffer *indexBuffer = mesh->getIndexBuffer();
@@ -1003,7 +1031,7 @@ std::vector<Shader *> ShadeApplication::_getShaders()
 
 bool ShadeApplication::getKeyPressed(Key key)
 {
-    return (glfwGetKey(window, (int) key) != GLFW_RELEASE);
+    return (glfwGetKey(window, (int)key) != GLFW_RELEASE);
 }
 
 bool ShadeApplication::getKeyReleased(Key key)
@@ -1018,10 +1046,14 @@ void ShadeApplication::updateMouseData()
     // Get mouse position
     double tx, ty;
     glfwGetCursorPos(window, &tx, &ty);
-    mouseData.position = {tx, ty};
+    mouseData.pixelPosition = {tx, ty};
 
     // Calculate mouse movement since previous frame
-    mouseData.movement = mouseData.position - previousMouseData.position;
+    mouseData.pixelMovement = mouseData.pixelPosition - previousMouseData.pixelPosition;
+
+    // Calculate normalised values
+    mouseData.position.x = tx / info.windowSize.width;
+    mouseData.position.y = ty / info.windowSize.height;
 
     // Get mouse buttons
     mouseData.leftButtonPressed =
