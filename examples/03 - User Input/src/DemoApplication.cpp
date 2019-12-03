@@ -10,6 +10,7 @@ ShadeApplicationInfo DemoApplication::preInit()
     appInfo.windowFullscreen = false;
     appInfo.clearColour = Colour(0.15f, 0.15f, 0.15f);
 	appInfo.windowResizable = true;
+    appInfo.mouseLock = true;
 
     return appInfo;
 }
@@ -67,13 +68,17 @@ void DemoApplication::destroy()
 
 void DemoApplication::update(ShadeApplicationFrameData frameData)
 {
+    // Check if escape button has been pressed
+    if (getKeyPressed(SHADE_KEY_ESCAPE))
+        exit();
+
 	// Get current window size
 	Rect windowSize = getWindowSize();
 
     // Update cube rotation
     Mouse mouse = getMouse();
-    cubeRotation.x += mouse.movement.x;
-    cubeRotation.y += mouse.movement.y;
+    cubeRotation.x += mouse.pixelMovement.x;
+    cubeRotation.y += mouse.pixelMovement.y;
 
 	// Calculate mvp
 	glm::mat4 model = 
@@ -82,7 +87,6 @@ void DemoApplication::update(ShadeApplicationFrameData frameData)
 	glm::mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), windowSize.width / windowSize.height, 0.1f, 100.0f);
 	uniformData.mvp = projection * view * model;
-
 
     uniformBuffer->setData(&uniformData);
 }
