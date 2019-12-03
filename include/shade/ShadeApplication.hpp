@@ -27,9 +27,9 @@ struct Mouse
 {
     glm::vec2 position;
     glm::vec2 movement; // Mouse movement since last frame
-    bool leftButtonPressed = false;
-    bool rightButtonPressed = false;
-    bool middleButtonPressed = false;
+    bool leftButtonPressed;
+    bool rightButtonPressed;
+    bool middleButtonPressed;
 };
 
 enum Key

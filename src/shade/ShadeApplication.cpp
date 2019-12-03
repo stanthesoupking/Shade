@@ -58,6 +58,9 @@ void ShadeApplication::start()
     // Initialise user-variables
     this->init();
 
+    // Warm mouse data -- to get initial mouse movement of zero
+    updateMouseData();
+
     // Enter main loop
     while (!glfwWindowShouldClose(window))
     {
