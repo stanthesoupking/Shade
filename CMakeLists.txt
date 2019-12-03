@@ -4,7 +4,15 @@ project(ShadeApp)
 
 include(FetchContent)
 
-set (CMAKE_CXX_STANDARD 17)
+set(CMAKE_CXX_STANDARD 17)
+
+# Default to release build
+if(NOT CMAKE_BUILD_TYPE)
+  set(CMAKE_BUILD_TYPE Release)
+endif()
+
+# If release build, enable full compiler optimisation
+set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 include_directories(include)
 
