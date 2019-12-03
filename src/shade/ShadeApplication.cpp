@@ -995,7 +995,12 @@ std::vector<Shader *> ShadeApplication::_getShaders()
     return this->shaderRegistry;
 }
 
-bool ShadeApplication::getKeyDown(Key key)
+bool ShadeApplication::getKeyPressed(Key key)
 {
     return (glfwGetKey(window, (int) key) != GLFW_RELEASE);
+}
+
+bool ShadeApplication::getKeyReleased(Key key)
+{
+    return !getKeyPressed(key);
 }

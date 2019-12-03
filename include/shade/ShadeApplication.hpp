@@ -236,6 +236,7 @@ public:
 	void _unregisterShader(Shader* shader);
 	std::vector<Shader*> _getShaders();
 
-    bool getKeyDown(Key key);
+    bool getKeyPressed(Key key);
+    bool getKeyReleased(Key key);
 };
 } // namespace Shade
