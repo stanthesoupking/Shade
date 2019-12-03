@@ -98,6 +98,7 @@ void ShadeApplication::initWindow()
     glfwInit();
     glfwWindowHint(GLFW_CLIENT_API, GLFW_NO_API);
 
+    // Check if window is resizable
     if (this->info.windowResizable)
     {
         glfwWindowHint(GLFW_RESIZABLE, GLFW_TRUE);
@@ -107,9 +108,30 @@ void ShadeApplication::initWindow()
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     }
 
+    GLFWmonitor* monitor;
+    // Check if window should be fullscreen
+    if (this->info.windowFullscreen)
+    {
+        monitor = glfwGetPrimaryMonitor();
+
+        // Match window properties with the monitor's video mode
+        const GLFWvidmode* mode = glfwGetVideoMode(monitor);
+        glfwWindowHint(GLFW_RED_BITS, mode->redBits);
+        glfwWindowHint(GLFW_GREEN_BITS, mode->greenBits);
+        glfwWindowHint(GLFW_BLUE_BITS, mode->blueBits);
+        glfwWindowHint(GLFW_REFRESH_RATE, mode->refreshRate);
+
+        // Match window size with the full size of the monitor
+        this->info.windowSize = {0, 0, (float)mode->width, (float)mode->height};
+    }
+    else
+    {
+        monitor = nullptr;
+    }
+    
     window = glfwCreateWindow(this->info.windowSize.width,
                               this->info.windowSize.height,
-                              this->info.windowTitle.c_str(), nullptr, nullptr);
+                              this->info.windowTitle.c_str(), monitor, nullptr);
 
     glfwSetWindowUserPointer(window, this);
 

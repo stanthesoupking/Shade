@@ -32,6 +32,7 @@ struct ShadeApplicationInfo
     std::string windowTitle = "Shade Application";
     Rect windowSize = {0, 0, 640, 480};
 	bool windowResizable = true;
+    bool windowFullscreen = false;
     Colour clearColour = {0, 0, 0, 1};
 };
 
