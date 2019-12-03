@@ -101,6 +101,7 @@ private:
 	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
 	void recreateSwapchain();
 	void cleanupSwapchain();
+    void cleanupDepthResources();
 
     ShadeApplicationFrameData getNextFrameData();
 

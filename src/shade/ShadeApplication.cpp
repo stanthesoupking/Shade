@@ -18,9 +18,7 @@ ShadeApplication::~ShadeApplication()
     vkDestroySemaphore(vulkanData.device, vulkanData.imageAvailableSemaphore, nullptr);
     vkDestroySemaphore(vulkanData.device, vulkanData.renderFinishedSemaphore, nullptr);
 
-    vkDestroyImage(vulkanData.device, vulkanData.depthImage, nullptr);
-    vkDestroyImageView(vulkanData.device, vulkanData.depthImageView, nullptr);
-    vkFreeMemory(vulkanData.device, vulkanData.depthImageMemory, nullptr);
+    cleanupDepthResources();
 
     vkDestroyRenderPass(vulkanData.device, vulkanData.renderPass, nullptr);
 
@@ -618,7 +616,7 @@ void ShadeApplication::createRenderPass()
     renderPassInfo.pSubpasses = &subpass;
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
-    
+
     if (vkCreateRenderPass(vulkanData.device, &renderPassInfo, nullptr,
                            &vulkanData.renderPass) != VK_SUCCESS)
     {
@@ -761,6 +759,9 @@ void ShadeApplication::recreateSwapchain()
         shader->_recreateGraphicsPipeline();
     }
 
+    cleanupDepthResources();
+    createDepthResources();
+
     createFramebuffers();
     createCommandBuffers();
 }
@@ -782,6 +783,13 @@ void ShadeApplication::cleanupSwapchain()
     }
 
     vkDestroySwapchainKHR(vulkanData.device, vulkanData.swapChain, nullptr);
+}
+
+void ShadeApplication::cleanupDepthResources()
+{
+    vkDestroyImage(vulkanData.device, vulkanData.depthImage, nullptr);
+    vkDestroyImageView(vulkanData.device, vulkanData.depthImageView, nullptr);
+    vkFreeMemory(vulkanData.device, vulkanData.depthImageMemory, nullptr);
 }
 
 void ShadeApplication::renderStart()
