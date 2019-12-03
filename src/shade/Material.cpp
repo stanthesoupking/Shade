@@ -2,7 +2,7 @@
 
 using namespace Shade;
 
-Material::Material(VulkanApplication* app, Shader* shader, std::vector<std::variant<Buffer*, UniformTexture*>> uniformData)
+Material::Material(VulkanApplication* app, Shader* shader, std::vector<UniformBufferData> uniformData)
 {
     this->vulkanData = app->_getVulkanData();
 

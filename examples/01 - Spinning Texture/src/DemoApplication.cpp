@@ -5,6 +5,7 @@
 ShadeApplicationInfo DemoApplication::preInit()
 {
     ShadeApplicationInfo appInfo;
+	appInfo.windowTitle = "Shade Examples - Spinning Texture";
     appInfo.windowSize = Rect(860, 640);
     appInfo.clearColour = Colour(0.15f, 0.15f, 0.15f);
 	appInfo.windowResizable = true;

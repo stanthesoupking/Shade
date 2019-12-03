@@ -29,6 +29,7 @@ struct ShadeApplicationFrameData
 
 struct ShadeApplicationInfo
 {
+    std::string windowTitle = "Shade Application";
     Rect windowSize = {0, 0, 640, 480};
 	bool windowResizable = true;
     Colour clearColour = {0, 0, 0, 1};
@@ -131,6 +132,9 @@ public:
 	
 	void setWindowSize(Rect windowSize);
 	Rect getWindowSize();
+
+    void setWindowTitle(std::string windowTitle);
+    std::string getWindowTitle();
 
     void renderMesh(Mesh* mesh, Material *material);
 

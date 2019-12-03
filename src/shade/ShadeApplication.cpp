@@ -107,7 +107,10 @@ void ShadeApplication::initWindow()
         glfwWindowHint(GLFW_RESIZABLE, GLFW_FALSE);
     }
 
-    window = glfwCreateWindow(this->info.windowSize.width, this->info.windowSize.height, "Shade Application", nullptr, nullptr);
+    window = glfwCreateWindow(this->info.windowSize.width,
+                              this->info.windowSize.height,
+                              this->info.windowTitle.c_str(), nullptr, nullptr);
+
     glfwSetWindowUserPointer(window, this);
 
     // Setup callbacks
@@ -902,6 +905,18 @@ void ShadeApplication::setWindowSize(Rect windowSize)
 Rect ShadeApplication::getWindowSize()
 {
     return this->info.windowSize;
+}
+
+void ShadeApplication::setWindowTitle(std::string windowTitle)
+{
+    this->info.windowTitle = windowTitle;
+
+    glfwSetWindowTitle(window, windowTitle.c_str());
+}
+
+std::string ShadeApplication::getWindowTitle()
+{
+    return this->info.windowTitle;
 }
 
 void ShadeApplication::renderMesh(Mesh *mesh, Material *material)
