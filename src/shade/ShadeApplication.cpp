@@ -63,6 +63,9 @@ void ShadeApplication::start()
     {
         glfwPollEvents();
 
+        // Update mouse data
+        updateMouseData();
+
         this->update(
             getNextFrameData());
 
@@ -686,7 +689,7 @@ void ShadeApplication::createSemaphores()
         vkCreateSemaphore(vulkanData.device, &semaphoreInfo,
                           nullptr, &vulkanData.renderFinishedSemaphore) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to create semaphores!");
+        throw std::runtime_error("Shade: Failed to create semaphores!");
     }
 }
 
@@ -704,7 +707,7 @@ void ShadeApplication::createCommandPool()
     if (vkCreateCommandPool(vulkanData.device, &poolInfo, nullptr,
                             &vulkanData.commandPool) != VK_SUCCESS)
     {
-        throw std::runtime_error("Failed to create command pool!");
+        throw std::runtime_error("Shade: Failed to create command pool!");
     }
 }
 
@@ -1003,4 +1006,30 @@ bool ShadeApplication::getKeyPressed(Key key)
 bool ShadeApplication::getKeyReleased(Key key)
 {
     return !getKeyPressed(key);
+}
+
+void ShadeApplication::updateMouseData()
+{
+    previousMouseData = mouseData;
+
+    // Get mouse position
+    double tx, ty;
+    glfwGetCursorPos(window, &tx, &ty);
+    mouseData.position = {tx, ty};
+
+    // Calculate mouse movement since previous frame
+    mouseData.movement = mouseData.position - previousMouseData.position;
+
+    // Get mouse buttons
+    mouseData.leftButtonPressed =
+        (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);
+    mouseData.middleButtonPressed =
+        (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_MIDDLE) == GLFW_PRESS);
+    mouseData.rightButtonPressed =
+        (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
+}
+
+Mouse ShadeApplication::getMouse()
+{
+    return this->mouseData;
 }

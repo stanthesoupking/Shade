@@ -3,6 +3,8 @@
 #define GLFW_INCLUDE_VULKAN
 #include "GLFW/glfw3.h"
 
+#include <glm/glm.hpp>
+
 #include <vulkan/vulkan.h>
 
 #include <vector>
@@ -20,6 +22,15 @@
 
 namespace Shade
 {
+
+struct Mouse
+{
+    glm::vec2 position;
+    glm::vec2 movement; // Mouse movement since last frame
+    bool leftButtonPressed = false;
+    bool rightButtonPressed = false;
+    bool middleButtonPressed = false;
+};
 
 enum Key
 {
@@ -158,6 +169,9 @@ private:
         0.0f // Placeholder delta time
     };
 
+    Mouse mouseData;
+    Mouse previousMouseData;
+
     const std::vector<const char *> validationLayers = {
         "VK_LAYER_KHRONOS_validation"};
 
@@ -202,11 +216,12 @@ private:
     void renderStart();
     void renderPresent();
 
+    void updateMouseData();
+
 	/**
 	 * Keep track of loaded shaders for updating on window resize events.
 	 */
 	std::vector<Shader*> shaderRegistry;
-
 public:
     ShadeApplication();
     ~ShadeApplication();
@@ -238,5 +253,7 @@ public:
 
     bool getKeyPressed(Key key);
     bool getKeyReleased(Key key);
+
+    Mouse getMouse();
 };
 } // namespace Shade
