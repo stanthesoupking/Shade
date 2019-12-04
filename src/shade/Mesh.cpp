@@ -9,8 +9,8 @@ using namespace Shade;
 
 const StructuredBufferLayout Mesh::baseLayout = {
     {
-        {"inTexCoord", VEC2},
-        {"inPosition", VEC3}
+        {"inPosition", VEC3},
+        {"inTexCoord", VEC2}
     }
 };
 

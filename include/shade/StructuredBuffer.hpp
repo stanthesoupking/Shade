@@ -47,7 +47,9 @@ public:
 	StructuredBufferLayout(std::vector<StructuredBufferLayoutEntry> layout);
 	~StructuredBufferLayout();
 
-	uint32_t getStride();
+	uint32_t getStride(BufferType bufferType);
+	uint32_t getAlignedStride();
+	uint32_t getUnalignedStride();
 
 	void *alignData(void *data, uint32_t count);
 	uint32_t getLargestBufferVariableAlignment();
@@ -58,6 +60,9 @@ class StructuredBuffer : public Buffer
 {
 private:
 	StructuredBufferLayout layout;
+	BufferType bufferType;
+
+	static void* prepareData(void* data, uint32_t count, BufferType bufferType, StructuredBufferLayout layout);
 
 public:
 	StructuredBuffer(VulkanApplication *app, StructuredBufferLayout layout, void *data, uint32_t count, BufferType bufferType = VERTEX);

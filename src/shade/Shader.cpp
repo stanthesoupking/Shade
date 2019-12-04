@@ -147,7 +147,7 @@ void Shader::createGraphicsPipeline()
 
 	VkVertexInputBindingDescription bindingDescription = {};
 	bindingDescription.binding = 0;
-	bindingDescription.stride = shaderLayout.vertexLayout.getStride();
+	bindingDescription.stride = shaderLayout.vertexLayout.getStride(VERTEX);
 	bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	auto attributeDescriptions = shaderLayout.vertexLayout._getAttributeDescriptions();

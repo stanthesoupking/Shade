@@ -10,26 +10,41 @@ StructuredBuffer::StructuredBuffer(VulkanApplication *app,
 								   void *data, uint32_t count,
 								   BufferType bufferType)
 	: Buffer(
-		  app, layout.alignData(data, count),
-		  layout.getStride(),
+		  app, prepareData(data, count, bufferType, layout),
+		  layout.getStride(bufferType),
 		  count, bufferType)
 {
 	this->layout = layout;
+	this->bufferType = bufferType;
 }
 
 StructuredBuffer::~StructuredBuffer()
 {
 }
 
+void* StructuredBuffer::prepareData(void* data, uint32_t count, BufferType bufferType, StructuredBufferLayout layout)
+{
+	if (bufferType == UNIFORM)
+	{
+		// Align data designated for uniform usage
+		return layout.alignData(data, count);
+	}
+	else
+	{
+		// Don't perform aligned on non-uniform types
+		return data;
+	}
+}
+
 void StructuredBuffer::setData(void *data, uint32_t count)
 {
 	// Align data to meet Vulkan specifications
-	void *alignedData = layout.alignData(data, count);
+	void* preparedData = prepareData(data, count, bufferType, layout);
 
-	Buffer::setData(alignedData, layout.getStride(), count);
+	Buffer::setData(preparedData, layout.getStride(bufferType), count);
 
 	// Free aligned data
-	free(alignedData);
+	free(preparedData);
 }
 
 // Structured Buffer Layout Implementation
@@ -134,7 +149,21 @@ VkFormat StructuredBufferLayout::getBufferVariableTypeFormat(StructuredBufferVar
 	}
 }
 
-uint32_t StructuredBufferLayout::getStride()
+uint32_t StructuredBufferLayout::getStride(BufferType bufferType)
+{
+	if (bufferType == UNIFORM)
+	{
+		// Align data designated for uniform usage
+		return getAlignedStride();
+	}
+	else
+	{
+		// Don't perform aligned on non-uniform types
+		return getUnalignedStride();
+	}
+}
+
+uint32_t StructuredBufferLayout::getAlignedStride()
 {
 	uint32_t largestAlignment = getLargestBufferVariableAlignment();
 	uint32_t stride = 0;
@@ -146,7 +175,18 @@ uint32_t StructuredBufferLayout::getStride()
 	}
 
 	return ceil(stride / (float)largestAlignment) * largestAlignment;
-	;
+}
+
+uint32_t StructuredBufferLayout::getUnalignedStride()
+{
+	uint32_t stride = 0;
+
+	for (const auto entry : layout)
+	{
+		stride += getBufferVariableTypeSize(entry.type);
+	}
+
+	return stride;
 }
 
 uint32_t StructuredBufferLayout::getUnalignedStructStride()
@@ -194,10 +234,10 @@ void *StructuredBufferLayout::alignData(void *data, uint32_t count)
 	uint32_t alignment = getLargestBufferVariableAlignment();
 
 	// Allocate new data
-	void *newData = malloc(getStride() * count);
+	void *newData = malloc(getAlignedStride() * count);
 
 	uint32_t uStructSize = getUnalignedStructStride();
-	uint32_t aStructSize = getStride();
+	uint32_t aStructSize = getAlignedStride();
 	uint32_t structSizeDiff = aStructSize - uStructSize;
 
 	uint32_t dataPos = 0;

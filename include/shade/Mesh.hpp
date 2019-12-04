@@ -14,8 +14,8 @@ namespace Shade
     
 struct BaseVertex
 {
-    glm::vec2 inTexCoord;
     glm::vec3 inPosition;
+    glm::vec2 inTexCoord;
 };
 
 class Mesh
