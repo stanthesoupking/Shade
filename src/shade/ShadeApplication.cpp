@@ -1056,6 +1056,13 @@ void ShadeApplication::updateMouseData()
     mouseData.position.x = tx / info.windowSize.width;
     mouseData.position.y = ty / info.windowSize.height;
 
+	// Calculate equalised movement taking into account aspect ratio
+	mouseData.movement.x = (mouseData.pixelMovement.x / this->info.windowSize.width)*
+		(this->info.windowSize.width / this->info.windowSize.height);
+
+	mouseData.movement.y = (mouseData.pixelMovement.y / this->info.windowSize.height) *
+		(this->info.windowSize.height / this->info.windowSize.width);
+
     // Get mouse buttons
     mouseData.leftButtonPressed =
         (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_LEFT) == GLFW_PRESS);

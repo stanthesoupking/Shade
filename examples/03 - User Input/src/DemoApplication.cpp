@@ -77,13 +77,13 @@ void DemoApplication::update(ShadeApplicationFrameData frameData)
 
     // Update cube rotation
     Mouse mouse = getMouse();
-    cubeRotation.x += mouse.pixelMovement.x;
-    cubeRotation.y += mouse.pixelMovement.y;
+    cubeRotation.x += mouse.movement.x;
+    cubeRotation.y += mouse.movement.y;
 
 	// Calculate mvp
 	glm::mat4 model = 
-        glm::rotate(glm::mat4(1.0f), cubeRotation.x * glm::radians(0.5f), glm::vec3(0.0f, 0.0f, 1.0f)) *
-        glm::rotate(glm::mat4(1.0f), cubeRotation.y * glm::radians(0.5f), glm::vec3(0.0f, 1.0f, 0.0f));
+        glm::rotate(glm::mat4(1.0f), cubeRotation.x * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)) *
+        glm::rotate(glm::mat4(1.0f), cubeRotation.y * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), windowSize.width / windowSize.height, 0.1f, 100.0f);
 	uniformData.mvp = projection * view * model;
