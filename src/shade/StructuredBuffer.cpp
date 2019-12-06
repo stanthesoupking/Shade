@@ -22,7 +22,7 @@ StructuredBuffer::~StructuredBuffer()
 {
 }
 
-void* StructuredBuffer::prepareData(void* data, uint32_t count, BufferType bufferType, StructuredBufferLayout layout)
+void *StructuredBuffer::prepareData(void *data, uint32_t count, BufferType bufferType, StructuredBufferLayout layout)
 {
 	if (bufferType == UNIFORM)
 	{
@@ -39,7 +39,7 @@ void* StructuredBuffer::prepareData(void* data, uint32_t count, BufferType buffe
 void StructuredBuffer::setData(void *data, uint32_t count)
 {
 	// Align data to meet Vulkan specifications
-	void* preparedData = prepareData(data, count, bufferType, layout);
+	void *preparedData = prepareData(data, count, bufferType, layout);
 
 	Buffer::setData(preparedData, layout.getStride(bufferType), count);
 
@@ -290,4 +290,24 @@ uint32_t StructuredBufferLayout::getLargestBufferVariableAlignment()
 	}
 
 	return alignment;
+}
+
+std::optional<uint32_t> StructuredBufferLayout::getPropertyOffset(
+	StructuredBufferLayoutEntryFlag flag)
+{
+	std::optional<uint32_t> result;
+
+	uint32_t offset = 0;
+	for(const auto entry : layout)
+	{
+		if(entry.flag == flag)
+		{
+			result = offset;
+			break;
+		}
+
+		offset += getBufferVariableTypeSize(entry.type);
+	}
+
+	return result;
 }

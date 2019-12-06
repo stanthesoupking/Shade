@@ -11,7 +11,7 @@
 
 namespace Shade
 {
-    
+
 struct BaseVertex
 {
     glm::vec3 inPosition;
@@ -31,10 +31,11 @@ public:
          uint32_t vertexCount);
     ~Mesh();
 
-    static Mesh* loadFromOBJ(VulkanApplication *app, std::string path);
+    static Mesh *loadFromOBJ(VulkanApplication *app, std::string path,
+                             StructuredBufferLayout vertexLayout);
 
-    IndexBuffer* getIndexBuffer();
-    VertexBuffer* getVertexBuffer();
+    IndexBuffer *getIndexBuffer();
+    VertexBuffer *getVertexBuffer();
 
     static const StructuredBufferLayout baseLayout;
 };

@@ -13,7 +13,6 @@ using namespace Shade;
 struct Vertex
 {
     glm::vec3 inPosition;
-    glm::vec3 inNormal;
 	glm::vec2 inTexCoord;
 };
 

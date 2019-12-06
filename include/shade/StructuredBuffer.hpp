@@ -3,6 +3,7 @@
 #include "Buffer.hpp"
 
 #include <string>
+#include <optional>
 #include <vector>
 
 #include <vulkan/vulkan.h>
@@ -22,10 +23,19 @@ enum StructuredBufferVariableType
 	MAT4
 };
 
+enum StructuredBufferLayoutEntryFlag
+{
+	SHADE_FLAG_NONE,
+	SHADE_FLAG_POSITION,
+	SHADE_FLAG_NORMAL,
+	SHADE_FLAG_TEXCOORD
+};
+
 struct StructuredBufferLayoutEntry
 {
 	std::string name;
 	StructuredBufferVariableType type;
+	StructuredBufferLayoutEntryFlag flag = SHADE_FLAG_NONE;
 };
 
 class StructuredBufferLayout
@@ -54,6 +64,8 @@ public:
 	void *alignData(void *data, uint32_t count);
 	uint32_t getLargestBufferVariableAlignment();
 	std::vector<VkVertexInputAttributeDescription> _getAttributeDescriptions();
+
+	std::optional<uint32_t> getPropertyOffset(StructuredBufferLayoutEntryFlag flag);
 };
 
 class StructuredBuffer : public Buffer

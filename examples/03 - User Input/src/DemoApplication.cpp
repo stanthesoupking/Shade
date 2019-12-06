@@ -20,8 +20,10 @@ void DemoApplication::init()
     StructuredBufferLayout uniformDataLayout = StructuredBufferLayout(
         {{"mvp", MAT4}});
 
-    StructuredBufferLayout vertexLayout = Mesh::baseLayout;
-	
+    StructuredBufferLayout vertexLayout = {
+        {{"inPosition", VEC3, SHADE_FLAG_POSITION},
+         {"inTexCoord", VEC2, SHADE_FLAG_TEXCOORD}}};
+
 	ShaderLayout shaderLayout = {
 		{
 			{0, ShaderStage::VERTEX, uniformDataLayout},
@@ -32,7 +34,7 @@ void DemoApplication::init()
 
     std::cout << "Loading mesh..." << std::endl;
 
-    mesh = Mesh::loadFromOBJ(this, "assets/models/cube.obj");
+    mesh = Mesh::loadFromOBJ(this, "assets/models/cube.obj", vertexLayout);
 
 	std::cout << "Loading texture..." << std::endl;
 
