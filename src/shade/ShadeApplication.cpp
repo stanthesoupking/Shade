@@ -697,10 +697,10 @@ void ShadeApplication::createSemaphores()
     VkSemaphoreCreateInfo semaphoreInfo = {};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    if (vkCreateSemaphore(vulkanData.device, &semaphoreInfo,
-                          nullptr, &vulkanData.imageAvailableSemaphore) != VK_SUCCESS |
-        vkCreateSemaphore(vulkanData.device, &semaphoreInfo,
-                          nullptr, &vulkanData.renderFinishedSemaphore) != VK_SUCCESS)
+    if ((vkCreateSemaphore(vulkanData.device, &semaphoreInfo,
+                          nullptr, &vulkanData.imageAvailableSemaphore) != VK_SUCCESS) |
+        (vkCreateSemaphore(vulkanData.device, &semaphoreInfo,
+                          nullptr, &vulkanData.renderFinishedSemaphore) != VK_SUCCESS))
     {
         throw std::runtime_error("Shade: Failed to create semaphores!");
     }

@@ -7,10 +7,6 @@
 
 using namespace Shade;
 
-const StructuredBufferLayout Mesh::baseLayout = {
-    {{"inPosition", VEC3, SHADE_FLAG_POSITION},
-     {"inTexCoord", VEC2, SHADE_FLAG_TEXCOORD}}};
-
 Mesh::Mesh(VulkanApplication *app, std::vector<int> indices,
            void *vertices, StructuredBufferLayout vertexLayout, uint32_t vertexCount)
 {
@@ -148,6 +144,15 @@ Mesh *Mesh::loadFromOBJ(VulkanApplication *app, std::string path,
                 attrib.vertices[3 * index.vertex_index + 2]};
         }
 
+        if (normalPropertySet)
+        {
+            glm::vec3 *currentVertexProp = (glm::vec3 *) ((char*)currentVertex + normalPropertyOffset);
+            *currentVertexProp = {
+                attrib.normals[3 * index.normal_index + 0],
+                attrib.normals[3 * index.normal_index + 1],
+                attrib.normals[3 * index.normal_index + 2]};
+        }
+
         if (texCoordPropertySet)
         {
             glm::vec2 *currentVertexProp = (glm::vec2*) ((char*)currentVertex + texCoordPropertyOffset);
@@ -160,5 +165,5 @@ Mesh *Mesh::loadFromOBJ(VulkanApplication *app, std::string path,
         i++;
     }
 
-    return new Mesh(app, indices, vertices, baseLayout, vertexCount);
+    return new Mesh(app, indices, vertices, vertexLayout, vertexCount);
 }

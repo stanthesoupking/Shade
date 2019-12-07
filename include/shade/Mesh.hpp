@@ -12,12 +12,6 @@
 namespace Shade
 {
 
-struct BaseVertex
-{
-    glm::vec3 inPosition;
-    glm::vec2 inTexCoord;
-};
-
 class Mesh
 {
 private:
@@ -36,8 +30,6 @@ public:
 
     IndexBuffer *getIndexBuffer();
     VertexBuffer *getVertexBuffer();
-
-    static const StructuredBufferLayout baseLayout;
 };
 
 } // namespace Shade

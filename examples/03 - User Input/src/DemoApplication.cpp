@@ -17,17 +17,32 @@ ShadeApplicationInfo DemoApplication::preInit()
 
 void DemoApplication::init()
 {
-    StructuredBufferLayout uniformDataLayout = StructuredBufferLayout(
-        {{"mvp", MAT4}});
+    StructuredBufferLayout uniformMVPLayout = {
+        {
+            {"mvp", MAT4}
+        }
+    };
+
+    StructuredBufferLayout uniformLightingLayout = {
+        {
+            {"lightDirection", VEC3},
+            {"lightColour", VEC3}
+        }
+    };
 
     StructuredBufferLayout vertexLayout = {
-        {{"inPosition", VEC3, SHADE_FLAG_POSITION},
-         {"inTexCoord", VEC2, SHADE_FLAG_TEXCOORD}}};
-
+        {
+            {"inPosition", VEC3, SHADE_FLAG_POSITION},
+            {"inTexCoord", VEC2, SHADE_FLAG_TEXCOORD},
+            {"inNormal", VEC3, SHADE_FLAG_NORMAL}
+        }
+    };
+    
 	ShaderLayout shaderLayout = {
 		{
-			{0, ShaderStage::VERTEX, uniformDataLayout},
-			{1, ShaderStage::FRAGMENT, UniformTextureLayout()}
+			{0, ShaderStage::VERTEX, uniformMVPLayout},
+			{1, ShaderStage::FRAGMENT, UniformTextureLayout()},
+            {2, ShaderStage::FRAGMENT, uniformLightingLayout}
 		},
 		vertexLayout
 	};
@@ -40,19 +55,28 @@ void DemoApplication::init()
 
 	texture = new UniformTexture(this, "assets/textures/florence.png");
 
-    std::cout << "Creating uniform buffer..." << std::endl;
+    std::cout << "Creating uniform buffers..." << std::endl;
 
-	uniformData = {
-        glm::mat4(1.0f)
+    // Create MVP buffer
+	uniformMVP = {
+        glm::mat4(1.0f) // mvp
     };
 
-    uniformBuffer = new StructuredUniformBuffer(this, uniformDataLayout, &uniformData);
+    uniformMVPBuffer = new StructuredUniformBuffer(this, uniformMVPLayout, &uniformMVP);
+
+    // Create lighting buffer
+    uniformLighting = {
+        glm::vec3(0.0f, 1.0f, 0.0f),    // lightingDirection
+        glm::vec3(1.0f, 1.0f, 1.0f)     // lightingColour
+    };
+
+    uniformLightingBuffer = new StructuredUniformBuffer(this, uniformLightingLayout, &uniformLighting);
 
     std::cout << "Loading shader..." << std::endl;
 
     basicShader = Shader::loadFromSPIRV(this, shaderLayout, "assets/shaders/vert.spv", "assets/shaders/frag.spv");
 
-	basicMaterial = new Material(this, basicShader, { uniformBuffer, texture });
+	basicMaterial = new Material(this, basicShader, { uniformMVPBuffer, texture, uniformLightingBuffer });
 
     cubeRotation = {0.0f, 0.0f};
 }
@@ -65,7 +89,8 @@ void DemoApplication::destroy()
 
     delete texture;
     delete mesh;
-    delete uniformBuffer;
+    delete uniformMVPBuffer;
+    delete uniformLightingBuffer;
 }
 
 void DemoApplication::update(ShadeApplicationFrameData frameData)
@@ -88,9 +113,9 @@ void DemoApplication::update(ShadeApplicationFrameData frameData)
         glm::rotate(glm::mat4(1.0f), cubeRotation.y * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
 	glm::mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), windowSize.width / windowSize.height, 0.1f, 100.0f);
-	uniformData.mvp = projection * view * model;
+	uniformMVP.mvp = projection * view * model;
 
-    uniformBuffer->setData(&uniformData);
+    uniformMVPBuffer->setData(&uniformMVP);
 }
 
 void DemoApplication::render()

@@ -14,11 +14,18 @@ struct Vertex
 {
     glm::vec3 inPosition;
 	glm::vec2 inTexCoord;
+    glm::vec3 inNormal;
 };
 
-struct UniformData
+struct UniformMVP
 {
     glm::mat4 mvp;
+};
+
+struct UniformLighting
+{
+    glm::vec3 lightDirection;
+    glm::vec3 lightColour;
 };
 
 class DemoApplication: public ShadeApplication
@@ -26,13 +33,15 @@ class DemoApplication: public ShadeApplication
 private:
     Mesh* mesh;
     UniformTexture* texture;
-    StructuredUniformBuffer* uniformBuffer;
+    StructuredUniformBuffer* uniformMVPBuffer;
+    StructuredUniformBuffer* uniformLightingBuffer;
     Shader* basicShader;
 	Material* basicMaterial;
 
     std::vector<Vertex> vertices;
     std::vector<int> indices;
-	UniformData uniformData;
+	UniformMVP uniformMVP;
+    UniformLighting uniformLighting;
 
     glm::vec2 cubeRotation;
 

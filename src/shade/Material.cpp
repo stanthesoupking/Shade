@@ -2,16 +2,20 @@
 
 using namespace Shade;
 
-Material::Material(VulkanApplication* app, Shader* shader, std::vector<UniformBufferData> uniformData)
+Material::Material(VulkanApplication *app, Shader *shader, std::vector<UniformBufferData> uniformData)
 {
-    this->vulkanData = app->_getVulkanData();
+	this->vulkanData = app->_getVulkanData();
 
-    this->shader = shader;
+	this->shader = shader;
 
 	ShaderLayout shaderLayout = shader->getShaderLayout();
-    
-    // Create descriptor sets
-    this->descriptorSet = shader->_getNewDescriptorSet();
+
+	// Create descriptor sets
+	this->descriptorSet = shader->_getNewDescriptorSet();
+
+	// Keep track of allocated info structs
+	std::vector<VkDescriptorBufferInfo *> allocBufferInfos;
+	std::vector<VkDescriptorImageInfo *> allocImageInfos;
 
 	int i = 0;
 	std::vector<VkWriteDescriptorSet> descriptorWrites;
@@ -20,12 +24,15 @@ Material::Material(VulkanApplication* app, Shader* shader, std::vector<UniformBu
 		if (std::holds_alternative<StructuredBufferLayout>(uniformEntry.layout))
 		{
 			auto uniformLayout = std::get<StructuredBufferLayout>(uniformEntry.layout);
-			auto buffer = std::get<Buffer*>(uniformData.at(i));
+			auto buffer = std::get<Buffer *>(uniformData.at(i));
 
-			VkDescriptorBufferInfo bufferInfo;
-			bufferInfo.buffer = buffer->_getVkBuffer();
-			bufferInfo.offset = 0;
-			bufferInfo.range = buffer->getTotalSize();
+			VkDescriptorBufferInfo *bufferInfo = (VkDescriptorBufferInfo *)malloc(sizeof(VkDescriptorBufferInfo));
+			bufferInfo->buffer = buffer->_getVkBuffer();
+			bufferInfo->offset = 0;
+			bufferInfo->range = buffer->getTotalSize();
+
+			// Keep track of allocated struct to future cleanup
+			allocBufferInfos.push_back(bufferInfo);
 
 			VkWriteDescriptorSet descriptorWrite = {};
 			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -34,22 +41,25 @@ Material::Material(VulkanApplication* app, Shader* shader, std::vector<UniformBu
 			descriptorWrite.dstArrayElement = 0;
 			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pBufferInfo = &bufferInfo;
+			descriptorWrite.pBufferInfo = bufferInfo;
 			descriptorWrite.pImageInfo = nullptr;
 			descriptorWrite.pTexelBufferView = nullptr;
 
 			descriptorWrites.push_back(descriptorWrite);
-
 		}
 		else if (std::holds_alternative<UniformTextureLayout>(uniformEntry.layout))
 		{
 			auto uniformTexture = std::get<UniformTextureLayout>(uniformEntry.layout);
-			auto texture = std::get<UniformTexture*>(uniformData.at(i));
+			auto texture = std::get<UniformTexture *>(uniformData.at(i));
 
-			VkDescriptorImageInfo imageInfo = {};
-			imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo.imageView = texture->_getTextureImageView();
-			imageInfo.sampler = texture->_getTextureSampler();
+			VkDescriptorImageInfo *imageInfo =
+				(VkDescriptorImageInfo *)malloc(sizeof(VkDescriptorImageInfo));
+			imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+			imageInfo->imageView = texture->_getTextureImageView();
+			imageInfo->sampler = texture->_getTextureSampler();
+
+			// Keep track of allocated struct to future cleanup
+			allocImageInfos.push_back(imageInfo);
 
 			VkWriteDescriptorSet descriptorWrite = {};
 			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
@@ -59,7 +69,7 @@ Material::Material(VulkanApplication* app, Shader* shader, std::vector<UniformBu
 			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
 			descriptorWrite.descriptorCount = 1;
 			descriptorWrite.pBufferInfo = nullptr;
-			descriptorWrite.pImageInfo = &imageInfo;
+			descriptorWrite.pImageInfo = imageInfo;
 			descriptorWrite.pTexelBufferView = nullptr;
 
 			descriptorWrites.push_back(descriptorWrite);
@@ -68,22 +78,37 @@ Material::Material(VulkanApplication* app, Shader* shader, std::vector<UniformBu
 	}
 
 	vkUpdateDescriptorSets(vulkanData->device,
-		static_cast<uint32_t>(descriptorWrites.size()),
-		descriptorWrites.data(), 0, nullptr);
+						   static_cast<uint32_t>(descriptorWrites.size()),
+						   descriptorWrites.data(), 0, nullptr);
+
+	// Cleanup allocated structs:
+
+	// Cleanup Buffer Info structs
+	for (auto bufferInfo : allocBufferInfos)
+	{
+		delete bufferInfo;
+	}
+
+	// Cleanup Image Info structs
+	for (auto imageInfo : allocImageInfos)
+	{
+		delete imageInfo;
+	}
+
 }
 
 Material::~Material()
 {
-    // TODO
-    //vkFreeDescriptorSets(...)
+	// TODO
+	//vkFreeDescriptorSets(...)
 }
 
-Shader* Material::getShader()
+Shader *Material::getShader()
 {
-    return this->shader;
+	return this->shader;
 }
 
 VkDescriptorSet Material::_getDescriptorSet()
 {
-    return this->descriptorSet;
+	return this->descriptorSet;
 }
