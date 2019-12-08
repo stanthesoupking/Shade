@@ -16,9 +16,12 @@ layout(binding = 2) uniform UniformLighting
 layout(location = 0) out vec4 outColour;
 
 void main() {
-    vec3 lighting = uniformLighting.ambientLighting +
+    vec3 lighting = clamp(
+        uniformLighting.ambientLighting +
         max(0.0, dot(uniformLighting.lightDirection, fragNormal))
-        * uniformLighting.lightColour;
+        * uniformLighting.lightColour,
+        vec3(0.0, 0.0, 0.0),
+        vec3(1.0, 1.0, 1.0));
     vec4 textureColour = texture(texSampler, fragTexCoord);
     outColour = textureColour * vec4(lighting, 1.0);
 }
