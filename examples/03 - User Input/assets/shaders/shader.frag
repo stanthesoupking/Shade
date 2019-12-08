@@ -10,11 +10,15 @@ layout(binding = 2) uniform UniformLighting
 {
     vec3 lightDirection;
     vec3 lightColour;
+    vec3 ambientLighting;
 } uniformLighting;
 
 layout(location = 0) out vec4 outColour;
 
 void main() {
+    vec3 lighting = uniformLighting.ambientLighting +
+        max(0.0, dot(uniformLighting.lightDirection, fragNormal))
+        * uniformLighting.lightColour;
     vec4 textureColour = texture(texSampler, fragTexCoord);
-    outColour = textureColour * vec4(uniformLighting.lightColour, 1.0);
+    outColour = textureColour * vec4(lighting, 1.0);
 }

@@ -20,12 +20,15 @@ struct Vertex
 struct UniformMVP
 {
     glm::mat4 mvp;
+    glm::mat4 mv;
+    glm::mat4 m;
 };
 
 struct UniformLighting
 {
     glm::vec3 lightDirection;
     glm::vec3 lightColour;
+    glm::vec3 ambientLighting;
 };
 
 class DemoApplication: public ShadeApplication

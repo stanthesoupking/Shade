@@ -19,14 +19,17 @@ void DemoApplication::init()
 {
     StructuredBufferLayout uniformMVPLayout = {
         {
-            {"mvp", MAT4}
+            {"mvp", MAT4},
+            {"mv", MAT4},
+            {"m", MAT4}
         }
     };
 
     StructuredBufferLayout uniformLightingLayout = {
         {
             {"lightDirection", VEC3},
-            {"lightColour", VEC3}
+            {"lightColour", VEC3},
+            {"ambientLighting", VEC3}
         }
     };
 
@@ -59,7 +62,9 @@ void DemoApplication::init()
 
     // Create MVP buffer
 	uniformMVP = {
-        glm::mat4(1.0f) // mvp
+        glm::mat4(1.0f),    // mvp
+        glm::mat4(1.0f),    // mv
+        glm::mat4(1.0f)     // m
     };
 
     uniformMVPBuffer = new StructuredUniformBuffer(this, uniformMVPLayout, &uniformMVP);
@@ -67,7 +72,8 @@ void DemoApplication::init()
     // Create lighting buffer
     uniformLighting = {
         glm::vec3(0.0f, 1.0f, 0.0f),    // lightingDirection
-        glm::vec3(1.0f, 1.0f, 1.0f)     // lightingColour
+        glm::vec3(1.0f, 1.0f, 1.0f),    // lightingColour
+        glm::vec3(0.4f, 0.4f, 0.4f)     // ambientLighting
     };
 
     uniformLightingBuffer = new StructuredUniformBuffer(this, uniformLightingLayout, &uniformLighting);
@@ -111,9 +117,11 @@ void DemoApplication::update(ShadeApplicationFrameData frameData)
 	glm::mat4 model = 
         glm::rotate(glm::mat4(1.0f), cubeRotation.x * glm::radians(90.0f), glm::vec3(0.0f, 0.0f, 1.0f)) *
         glm::rotate(glm::mat4(1.0f), cubeRotation.y * glm::radians(90.0f), glm::vec3(0.0f, 1.0f, 0.0f));
-	glm::mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, 0.0f, -1.0f));
+	glm::mat4 view = glm::lookAt(glm::vec3(2.0f, 2.0f, 2.0f), glm::vec3(0.0f, 0.0f, 0.0f), glm::vec3(0.0f, -1.0f, 0.0f));
 	glm::mat4 projection = glm::perspective(glm::radians(45.0f), windowSize.width / windowSize.height, 0.1f, 100.0f);
-	uniformMVP.mvp = projection * view * model;
+    uniformMVP.m = model;
+    uniformMVP.mv = view * model;
+	uniformMVP.mvp = projection * uniformMVP.mv;
 
     uniformMVPBuffer->setData(&uniformMVP);
 }

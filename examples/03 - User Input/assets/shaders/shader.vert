@@ -4,6 +4,8 @@
 layout(binding = 0) uniform UniformMVP
 {
     mat4 mvp;
+    mat4 mv;
+    mat4 m;
 } uniformMVP;
 
 layout(location = 0) in vec3 inPosition;
@@ -19,5 +21,5 @@ void main() {
     gl_Position = transformedPosition;
 
     fragTexCoord = inTexCoord;
-    fragNormal = inNormal;
+    fragNormal = vec3(uniformMVP.m * vec4(inNormal, 1.0));
 }
