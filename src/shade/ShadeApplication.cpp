@@ -5,6 +5,9 @@
 #include <algorithm>
 #include <array>
 
+#define VMA_IMPLEMENTATION
+#include "shade/vendor/vk_mem_alloc.hpp"
+
 using namespace Shade;
 
 ShadeApplication::ShadeApplication()
@@ -36,6 +39,8 @@ ShadeApplication::~ShadeApplication()
     }
 
     vkDestroySwapchainKHR(vulkanData.device, vulkanData.swapChain, nullptr);
+
+    vmaDestroyAllocator(vulkanData.allocator);
 
     vkDestroyDevice(vulkanData.device, nullptr);
 
@@ -164,6 +169,7 @@ void ShadeApplication::initVulkan()
     createSurface();
     pickPhysicalDevice();
     createLogicalDevice();
+    createAllocator();
     createSwapchain();
     createImageViews();
     createCommandPool();
@@ -438,6 +444,15 @@ void ShadeApplication::createLogicalDevice()
 
     vkGetDeviceQueue(vulkanData.device, indices.graphicsQueue.value(), 0, &vulkanData.graphicsQueue);
     vkGetDeviceQueue(vulkanData.device, indices.presentQueue.value(), 0, &vulkanData.presentQueue);
+}
+
+void ShadeApplication::createAllocator()
+{
+    VmaAllocatorCreateInfo createInfo = {};
+    createInfo.physicalDevice = vulkanData.physicalDevice;
+    createInfo.device = vulkanData.device;
+
+    vmaCreateAllocator(&createInfo, &vulkanData.allocator);
 }
 
 void ShadeApplication::createSwapchain()

@@ -196,6 +196,7 @@ private:
     bool checkDeviceExtensionsSupport(VkPhysicalDevice device);
     SwapChainSupportDetails querySwapChainSupport(VkPhysicalDevice device);
     void createLogicalDevice();
+    void createAllocator();
     void createSwapchain();
     VkExtent2D getOptimalSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
     VkPresentModeKHR getOptimalSwapPresentMode(

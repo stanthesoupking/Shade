@@ -14,8 +14,7 @@ Buffer::Buffer(VulkanApplication *app, void *data, uint32_t stride, uint32_t cou
 
 Buffer::~Buffer()
 {
-    vkDestroyBuffer(vulkanData->device, buffer, nullptr);
-    vkFreeMemory(vulkanData->device, bufferMemory, nullptr);
+    freeBuffer();
 }
 
 uint32_t Buffer::findMemoryType(uint32_t typeFilter,
@@ -43,66 +42,51 @@ void Buffer::createBuffer(void *data, uint32_t stride, uint32_t count)
     this->count = count;
     this->totalBufferSize = stride * count;
 
-    VkBufferCreateInfo createInfo = {};
-    createInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
-    createInfo.pNext = nullptr;
-    createInfo.flags = 0;
-    createInfo.size = totalBufferSize;
+    VkBufferCreateInfo bufferInfo = {};
+    bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
+    bufferInfo.pNext = nullptr;
+    bufferInfo.flags = 0;
+    bufferInfo.size = totalBufferSize;
 
     if (bufferType == VERTEX)
     {
-        createInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
+        bufferInfo.usage = VK_BUFFER_USAGE_VERTEX_BUFFER_BIT;
     }
     else if (bufferType == INDEX)
     {
-        createInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
+        bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
     }
     else if (bufferType == UNIFORM)
     {
-        createInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
+        bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     }
-	else if (bufferType == TRANSFER)
-	{
-		createInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
-	}
+    else if (bufferType == TRANSFER)
+    {
+        bufferInfo.usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+    }
 
-    createInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
+    bufferInfo.sharingMode = VK_SHARING_MODE_EXCLUSIVE;
 
-    if (vkCreateBuffer(vulkanData->device, &createInfo, nullptr, &buffer) != VK_SUCCESS)
+    VmaAllocationCreateInfo allocInfo = {};
+    // TODO: Provide option for this
+    allocInfo.usage = VMA_MEMORY_USAGE_CPU_ONLY;//VMA_MEMORY_USAGE_GPU_TO_CPU; //VMA_MEMORY_USAGE_GPU_ONLY;
+
+    if (vmaCreateBuffer(vulkanData->allocator, &bufferInfo, &allocInfo, &buffer,
+                        &allocation, &allocationInfo) != VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to create buffer!");
     }
 
-    VkMemoryRequirements memRequirements;
-    vkGetBufferMemoryRequirements(vulkanData->device, buffer, &memRequirements);
-
-    // Allocate buffer memory
-    VkMemoryAllocateInfo allocInfo = {};
-    allocInfo.sType = VK_STRUCTURE_TYPE_MEMORY_ALLOCATE_INFO;
-    allocInfo.pNext = nullptr;
-    allocInfo.memoryTypeIndex = findMemoryType(memRequirements.memoryTypeBits,
-                                               VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT);
-    allocInfo.allocationSize = memRequirements.size;
-
-    if (vkAllocateMemory(vulkanData->device, &allocInfo, nullptr, &bufferMemory) != VK_SUCCESS)
-    {
-        throw std::runtime_error("Shade: Failed to allocate buffer!");
-    }
-
-    // Bind allocated memory to buffer
-    vkBindBufferMemory(vulkanData->device, buffer, bufferMemory, 0);
-
     // Fill buffer
     void *mappedData;
-    vkMapMemory(vulkanData->device, bufferMemory, 0, createInfo.size, 0, &mappedData);
+    vmaMapMemory(vulkanData->allocator, allocation, &mappedData);
     memcpy(mappedData, data, totalBufferSize);
-    vkUnmapMemory(vulkanData->device, bufferMemory);
+    vmaUnmapMemory(vulkanData->allocator, allocation);
 }
 
 void Buffer::freeBuffer()
 {
-    vkDestroyBuffer(vulkanData->device, buffer, nullptr);
-    vkFreeMemory(vulkanData->device, bufferMemory, nullptr);
+    vmaDestroyBuffer(vulkanData->allocator, buffer, allocation);
 }
 
 VkBuffer Buffer::_getVkBuffer()
@@ -122,15 +106,12 @@ uint32_t Buffer::getTotalSize()
 
 void Buffer::setData(void *data, uint32_t stride, uint32_t count)
 {
-    // TODO: Optimise this so it doesn't free+alloc buffer when element count &
-    //  size are the same as previous values.
-
     if (stride * count == totalBufferSize)
     {
         void *mappedData;
-        vkMapMemory(vulkanData->device, bufferMemory, 0, totalBufferSize, 0, &mappedData);
+        vmaMapMemory(vulkanData->allocator, allocation, &mappedData);
         memcpy(mappedData, data, totalBufferSize);
-        vkUnmapMemory(vulkanData->device, bufferMemory);
+        vmaUnmapMemory(vulkanData->allocator, allocation);
     }
     else
     {

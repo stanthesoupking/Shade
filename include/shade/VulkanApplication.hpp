@@ -8,6 +8,7 @@
 
 #include <vector>
 #include <vulkan/vulkan.h>
+#include "./vendor/vk_mem_alloc.hpp"
 
 namespace Shade
 {
@@ -49,6 +50,8 @@ struct VulkanApplicationData
     VkDeviceMemory depthImageMemory;
     VkImageView depthImageView;
     VkFormat depthImageFormat;
+
+    VmaAllocator allocator;
 };
 
 class VulkanApplication

@@ -4,6 +4,8 @@
 
 #include <vulkan/vulkan.h>
 
+#include "./vendor/vk_mem_alloc.hpp"
+
 #include "./VulkanApplication.hpp"
 
 namespace Shade
@@ -23,7 +25,8 @@ private:
     VulkanApplicationData *vulkanData;
 
     VkBuffer buffer;
-    VkDeviceMemory bufferMemory;
+    VmaAllocation allocation;
+    VmaAllocationInfo allocationInfo;
 
     BufferType bufferType = VERTEX;
 
