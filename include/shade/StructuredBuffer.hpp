@@ -77,7 +77,8 @@ private:
 	static void* prepareData(void* data, uint32_t count, BufferType bufferType, StructuredBufferLayout layout);
 
 public:
-	StructuredBuffer(VulkanApplication *app, StructuredBufferLayout layout, void *data, uint32_t count, BufferType bufferType = VERTEX);
+	StructuredBuffer(VulkanApplication *app, StructuredBufferLayout layout,
+		void *data, uint32_t count, BufferType bufferType = VERTEX, BufferStorage bufferStorage = GPU);
 	~StructuredBuffer();
 
 	void setData(void *data, uint32_t count);

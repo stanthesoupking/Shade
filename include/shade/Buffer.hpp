@@ -19,16 +19,24 @@ enum BufferType
 	TRANSFER
 };
 
+enum BufferStorage
+{
+    CPU,
+    GPU
+};
+
 class Buffer
 {
 private:
+    VulkanApplication *app;
     VulkanApplicationData *vulkanData;
 
     VkBuffer buffer;
     VmaAllocation allocation;
     VmaAllocationInfo allocationInfo;
 
-    BufferType bufferType = VERTEX;
+    BufferType bufferType;
+    BufferStorage bufferStorage;
 
     uint32_t stride;
     uint32_t count;
@@ -37,10 +45,12 @@ private:
     uint32_t findMemoryType(uint32_t typeFilter,
                             VkMemoryPropertyFlags properties);
     void createBuffer(void *data, uint32_t stride, uint32_t count);
+    void fillBuffer(void *data);
     void freeBuffer();
 
 public:
-    Buffer(VulkanApplication *app, void *data, uint32_t stride, uint32_t count, BufferType bufferType = VERTEX);
+    Buffer(VulkanApplication *app, void *data, uint32_t stride, uint32_t count,
+        BufferType bufferType = VERTEX, BufferStorage = GPU);
     ~Buffer();
 
     VkBuffer _getVkBuffer();

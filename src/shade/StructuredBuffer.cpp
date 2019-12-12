@@ -8,11 +8,12 @@ using namespace Shade;
 StructuredBuffer::StructuredBuffer(VulkanApplication *app,
 								   StructuredBufferLayout layout,
 								   void *data, uint32_t count,
-								   BufferType bufferType)
+								   BufferType bufferType,
+								   BufferStorage bufferStorage)
 	: Buffer(
 		  app, prepareData(data, count, bufferType, layout),
 		  layout.getStride(bufferType),
-		  count, bufferType)
+		  count, bufferType, bufferStorage)
 {
 	this->layout = layout;
 	this->bufferType = bufferType;
