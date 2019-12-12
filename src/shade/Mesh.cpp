@@ -28,7 +28,7 @@ Mesh::Mesh(VulkanApplication *app, std::vector<int> indices,
 }
 
 /**
- * Class desconstructor
+ * Class destructor
  * 
  * Cleans up allocated buffers used by the mesh.
  */

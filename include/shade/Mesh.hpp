@@ -24,7 +24,7 @@ struct VertexPropertyInfo
     VertexPropertyInfoEntry texCoordProperty;
 };
 /**
- * Mesh implementation for the Shade engine
+ * Mesh implementation for the Shade engine.
  * 
  * Stores indices and vertices that make up a mesh.
  */
@@ -72,7 +72,7 @@ public:
          uint32_t vertexCount);
 
     /**
-     * Class desconstructor
+     * Class destructor
      * 
      * Cleans up allocated buffers used by the mesh.
      */
