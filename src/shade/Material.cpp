@@ -2,6 +2,13 @@
 
 using namespace Shade;
 
+/**
+ * Class constructor
+ * 
+ * @param app Vulkan application that the material is valid in.
+ * @param shader the shader that the material links to
+ * @param uniformData initial uniform data of the material
+ */
 Material::Material(VulkanApplication *app, Shader *shader, std::vector<UniformBufferData> uniformData)
 {
 	this->vulkanData = app->_getVulkanData();
@@ -94,20 +101,36 @@ Material::Material(VulkanApplication *app, Shader *shader, std::vector<UniformBu
 	{
 		delete imageInfo;
 	}
-
 }
 
+/**
+ * Class destructor
+ * 
+ * Cleans up allocated variables created by the object.
+ */
 Material::~Material()
 {
-	// TODO
-	//vkFreeDescriptorSets(...)
+	vkFreeDescriptorSets(vulkanData->device, vulkanData->descriptorPool, 1,
+		&descriptorSet);
 }
 
+/**
+ * Get the shader that the material is valid in.
+ * 
+ * @return material's linked shader
+ */
 Shader *Material::getShader()
 {
 	return this->shader;
 }
 
+/**
+ * ~INTERNAL METHOD~
+ *  
+ *  Return vulkan descriptor sets for binding the material at render time.
+ * 
+ * @return the material's uniform descriptor sets
+ */
 VkDescriptorSet Material::_getDescriptorSet()
 {
 	return this->descriptorSet;
