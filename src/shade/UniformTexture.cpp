@@ -9,37 +9,22 @@
 
 using namespace Shade;
 
-UniformTexture::UniformTexture(VulkanApplication *app, std::string path)
+UniformTexture::UniformTexture(VulkanApplication *app, UniformTexturePixelData pixelData)
 {
 	this->vulkanData = app->_getVulkanData();
 
-	int textureWidth, textureHeight, textureChannels;
-
-	// Load image at path
-	stbi_uc *pixels = stbi_load(path.c_str(), &textureWidth, &textureHeight,
-								&textureChannels, STBI_rgb_alpha);
-
-	if (!pixels)
-	{
-		throw std::runtime_error("Shade: Failed to load uniform texture!");
-	}
-
-	uint32_t stride = textureWidth * textureHeight * 4;
+	uint32_t stride = pixelData.width * pixelData.height * 4;
 
 	// Create staging buffer
-	Buffer stagingBuffer = Buffer(app, pixels, stride, 1, TRANSFER);
+	Buffer stagingBuffer = Buffer(app, pixelData.pixels, stride, 1, TRANSFER);
 
-	// Free original image
-	stbi_image_free(pixels);
-
-
-	app->_createImage(textureWidth, textureHeight,
+	app->_createImage(pixelData.width, pixelData.height,
 					  VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
 					  VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
 					  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
 
 	app->_transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
-	app->_copyBufferToImage(stagingBuffer._getVkBuffer(), textureImage, static_cast<uint32_t>(textureWidth), static_cast<uint32_t>(textureHeight));
+	app->_copyBufferToImage(stagingBuffer._getVkBuffer(), textureImage, static_cast<uint32_t>(pixelData.width), static_cast<uint32_t>(pixelData.height));
 	app->_transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
 
 	// Create image view
@@ -55,6 +40,28 @@ UniformTexture::~UniformTexture()
 	vkDestroyImageView(vulkanData->device, textureImageView, nullptr);
 	vkDestroyImage(vulkanData->device, textureImage, nullptr);
 	vkFreeMemory(vulkanData->device, textureImageMemory, nullptr);
+}
+
+UniformTexture* UniformTexture::loadFromPath(VulkanApplication *app, std::string path)
+{
+	UniformTexturePixelData pixelData = {};
+
+	// Load image at path
+	pixelData.pixels = stbi_load(path.c_str(), &pixelData.width, &pixelData.height,
+								&pixelData.channels, STBI_rgb_alpha);
+
+	if (!pixelData.pixels)
+	{
+		throw std::runtime_error("Shade: Failed to load uniform texture!");
+	}
+
+	// Create texture
+	UniformTexture* texture = new UniformTexture(app, pixelData);
+
+	// Free original image
+	stbi_image_free(pixelData.pixels);
+
+	return texture;
 }
 
 void UniformTexture::createTextureSampler()

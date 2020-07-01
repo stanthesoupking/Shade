@@ -24,8 +24,8 @@ void DemoApplication::init()
          {"inTexCoord", VEC2, SHADE_FLAG_TEXCOORD}}};
 
     ShaderLayout shaderLayout = {
-        {{0, ShaderStage::VERTEX, uniformDataLayout},
-         {1, ShaderStage::FRAGMENT, UniformTextureLayout()}},
+        {{"uData", 0, ShaderStage::VERTEX, uniformDataLayout},
+         {"texSampler", 1, ShaderStage::FRAGMENT, UniformTextureLayout()}},
         vertexLayout};
 
     std::cout << "Loading mesh..." << std::endl;
@@ -34,7 +34,7 @@ void DemoApplication::init()
 
     std::cout << "Loading texture..." << std::endl;
 
-    texture = new UniformTexture(this, "assets/textures/florence.png");
+    texture = UniformTexture::loadFromPath(this, "assets/textures/florence.png");
 
     std::cout << "Creating uniform buffer..." << std::endl;
 
@@ -47,7 +47,9 @@ void DemoApplication::init()
 
     basicShader = Shader::loadFromSPIRV(this, shaderLayout, "assets/shaders/vert.spv", "assets/shaders/frag.spv");
 
-    basicMaterial = new Material(this, basicShader, {uniformBuffer, texture});
+    basicMaterial = new Material(this, basicShader);
+    basicMaterial->setUniformStructuredBuffer(basicMaterial->getUniformIndex("uData"), uniformBuffer);
+    basicMaterial->setUniformTexture(basicMaterial->getUniformIndex("texSampler"), texture);
 }
 
 void DemoApplication::destroy()

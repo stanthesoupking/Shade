@@ -253,9 +253,16 @@ void *StructuredBufferLayout::alignData(void *data, uint32_t count)
 			uint32_t aSize = getAlignedBufferVariableTypeSize(entry.type, eAlignment);
 			uint32_t sizeDiff = aSize - uSize;
 
-			// Copy original data
-			memcpy((char *)newData + newDataPos, (char *)data + dataPos, uSize);
-
+			if (data != nullptr)
+			{
+				// Copy original data
+				memcpy((char *)newData + newDataPos, (char *)data + dataPos, uSize);
+			}
+			else
+			{
+				// Fill with zeros
+				memset((char *)newData + newDataPos, 0x00, uSize);
+			}
 			// Fill empty bytes to align data
 			memset((char *)newData + newDataPos + uSize, 0x00, sizeDiff);
 
@@ -299,9 +306,9 @@ std::optional<uint32_t> StructuredBufferLayout::getPropertyOffset(
 	std::optional<uint32_t> result;
 
 	uint32_t offset = 0;
-	for(const auto entry : layout)
+	for (const auto entry : layout)
 	{
-		if(entry.flag == flag)
+		if (entry.flag == flag)
 		{
 			result = offset;
 			break;

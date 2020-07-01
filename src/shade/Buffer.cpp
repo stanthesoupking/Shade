@@ -85,8 +85,11 @@ void Buffer::createBuffer(void *data, uint32_t stride, uint32_t count)
         throw std::runtime_error("Shade: Failed to create buffer!");
     }
 
-    // Fill buffer
-    fillBuffer(data);
+    if (data != nullptr)
+    {
+        // Fill buffer
+        fillBuffer(data);
+    }
 }
 
 void Buffer::fillBuffer(void *data)

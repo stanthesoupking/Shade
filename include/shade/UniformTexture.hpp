@@ -17,6 +17,15 @@ public:
 	~UniformTextureLayout() {}
 };
 
+struct UniformTexturePixelData
+{
+	void *pixels;
+	int width;
+	int height;
+	int channels;
+	int bpp; // Bits per pixel
+};
+
 class UniformTexture
 {
 private:
@@ -29,8 +38,10 @@ private:
 
 	void createTextureSampler();
 public:
-	UniformTexture(VulkanApplication* app, std::string path);
+	UniformTexture(VulkanApplication* app, UniformTexturePixelData pixelData);
 	~UniformTexture();
+
+	static UniformTexture* loadFromPath(VulkanApplication* app, std::string path);
 
 	VkImageView _getTextureImageView();
 	VkSampler _getTextureSampler();

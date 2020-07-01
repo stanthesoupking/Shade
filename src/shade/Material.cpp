@@ -9,98 +9,16 @@ using namespace Shade;
  * @param shader the shader that the material links to
  * @param uniformData initial uniform data of the material
  */
-Material::Material(VulkanApplication *app, Shader *shader, std::vector<UniformBufferData> uniformData)
+Material::Material(VulkanApplication *app, Shader *shader)
 {
 	this->vulkanData = app->_getVulkanData();
 
 	this->shader = shader;
 
-	ShaderLayout shaderLayout = shader->getShaderLayout();
+	// ShaderLayout shaderLayout = shader->getShaderLayout();
 
 	// Create descriptor sets
 	this->descriptorSet = shader->_getNewDescriptorSet();
-
-	// Keep track of allocated info structs
-	std::vector<VkDescriptorBufferInfo *> allocBufferInfos;
-	std::vector<VkDescriptorImageInfo *> allocImageInfos;
-
-	int i = 0;
-	std::vector<VkWriteDescriptorSet> descriptorWrites;
-	for (const auto uniformEntry : shaderLayout.uniformsLayout)
-	{
-		if (std::holds_alternative<StructuredBufferLayout>(uniformEntry.layout))
-		{
-			auto uniformLayout = std::get<StructuredBufferLayout>(uniformEntry.layout);
-			auto buffer = std::get<Buffer *>(uniformData.at(i));
-
-			VkDescriptorBufferInfo *bufferInfo = (VkDescriptorBufferInfo *)malloc(sizeof(VkDescriptorBufferInfo));
-			bufferInfo->buffer = buffer->_getVkBuffer();
-			bufferInfo->offset = 0;
-			bufferInfo->range = buffer->getTotalSize();
-
-			// Keep track of allocated struct to future cleanup
-			allocBufferInfos.push_back(bufferInfo);
-
-			VkWriteDescriptorSet descriptorWrite = {};
-			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrite.dstSet = descriptorSet;
-			descriptorWrite.dstBinding = uniformEntry.binding;
-			descriptorWrite.dstArrayElement = 0;
-			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pBufferInfo = bufferInfo;
-			descriptorWrite.pImageInfo = nullptr;
-			descriptorWrite.pTexelBufferView = nullptr;
-
-			descriptorWrites.push_back(descriptorWrite);
-		}
-		else if (std::holds_alternative<UniformTextureLayout>(uniformEntry.layout))
-		{
-			auto uniformTexture = std::get<UniformTextureLayout>(uniformEntry.layout);
-			auto texture = std::get<UniformTexture *>(uniformData.at(i));
-
-			VkDescriptorImageInfo *imageInfo =
-				(VkDescriptorImageInfo *)malloc(sizeof(VkDescriptorImageInfo));
-			imageInfo->imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
-			imageInfo->imageView = texture->_getTextureImageView();
-			imageInfo->sampler = texture->_getTextureSampler();
-
-			// Keep track of allocated struct to future cleanup
-			allocImageInfos.push_back(imageInfo);
-
-			VkWriteDescriptorSet descriptorWrite = {};
-			descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
-			descriptorWrite.dstSet = descriptorSet;
-			descriptorWrite.dstBinding = uniformEntry.binding;
-			descriptorWrite.dstArrayElement = 0;
-			descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
-			descriptorWrite.descriptorCount = 1;
-			descriptorWrite.pBufferInfo = nullptr;
-			descriptorWrite.pImageInfo = imageInfo;
-			descriptorWrite.pTexelBufferView = nullptr;
-
-			descriptorWrites.push_back(descriptorWrite);
-		}
-		i++;
-	}
-
-	vkUpdateDescriptorSets(vulkanData->device,
-						   static_cast<uint32_t>(descriptorWrites.size()),
-						   descriptorWrites.data(), 0, nullptr);
-
-	// Cleanup allocated structs:
-
-	// Cleanup Buffer Info structs
-	for (auto bufferInfo : allocBufferInfos)
-	{
-		delete bufferInfo;
-	}
-
-	// Cleanup Image Info structs
-	for (auto imageInfo : allocImageInfos)
-	{
-		delete imageInfo;
-	}
 }
 
 /**
@@ -111,7 +29,103 @@ Material::Material(VulkanApplication *app, Shader *shader, std::vector<UniformBu
 Material::~Material()
 {
 	vkFreeDescriptorSets(vulkanData->device, vulkanData->descriptorPool, 1,
-		&descriptorSet);
+						 &descriptorSet);
+}
+
+/**
+ * Get the index in the material for uniform getter and setter methods
+ * 
+ * @param uniformName name of the uniform to get the index of
+ * @return the index of the uniform or '-1' if the uniform index could not
+ *  be found.
+ */
+int Material::getUniformIndex(std::string uniformName)
+{
+	// Get shader uniform layout
+	std::vector<UniformLayoutEntry> uniformLayout =
+		shader->getShaderLayout().uniformsLayout;
+
+	// Find the matching uniform
+	int i = 0;
+	for (const auto uniformEntry : uniformLayout)
+	{
+		if (!uniformEntry.name.compare(uniformName))
+		{
+			// Match found
+			return i;
+		}
+		i++;
+	}
+
+	return -1;
+}
+
+/**
+ * Set the buffer of the uniform at the given index.
+ * 
+ * @param uniformIndex index of the uniform to modify
+ * @param buffer buffer to use
+ */
+void Material::setUniformStructuredBuffer(int uniformIndex, StructuredUniformBuffer *buffer)
+{
+	// Update vulkan descriptor set
+	VkDescriptorBufferInfo bufferInfo;
+	bufferInfo.buffer = buffer->_getVkBuffer();
+	bufferInfo.offset = 0;
+	bufferInfo.range = buffer->getTotalSize();
+
+	ShaderLayout shaderLayout = shader->getShaderLayout();
+	UniformLayoutEntry uniformEntry = shaderLayout.uniformsLayout.at(uniformIndex);
+
+	VkWriteDescriptorSet descriptorWrite = {};
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = descriptorSet;
+	descriptorWrite.dstBinding = uniformEntry.binding;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.pBufferInfo = &bufferInfo;
+	descriptorWrite.pImageInfo = nullptr;
+	descriptorWrite.pTexelBufferView = nullptr;
+
+	// Write to GPU
+	vkUpdateDescriptorSets(vulkanData->device,
+						   1,
+						   &descriptorWrite, 0, nullptr);
+}
+
+/**
+ * Set the texture of the uniform at the given index.
+ * 
+ * @param uniformIndex index of the uniform to modify
+ * @param texture texture to use
+ */
+void Material::setUniformTexture(int uniformIndex, UniformTexture *texture)
+{
+	// Update vulkan descriptor set
+	VkDescriptorImageInfo imageInfo;
+	imageInfo.imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+	imageInfo.imageView = texture->_getTextureImageView();
+	imageInfo.sampler = texture->_getTextureSampler();
+
+	ShaderLayout shaderLayout = shader->getShaderLayout();
+	UniformLayoutEntry uniformEntry = shaderLayout.uniformsLayout.at(uniformIndex);
+
+	VkWriteDescriptorSet descriptorWrite = {};
+	descriptorWrite.sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET;
+	descriptorWrite.dstSet = descriptorSet;
+	descriptorWrite.dstBinding = uniformEntry.binding;
+	descriptorWrite.dstArrayElement = 0;
+	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER;
+	descriptorWrite.descriptorCount = 1;
+	descriptorWrite.pBufferInfo = nullptr;
+	descriptorWrite.pImageInfo = &imageInfo;
+	descriptorWrite.pTexelBufferView = nullptr;
+
+	// Write to GPU
+	vkUpdateDescriptorSets(vulkanData->device,
+						   1,
+						   &descriptorWrite, 0, nullptr);
 }
 
 /**

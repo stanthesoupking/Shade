@@ -2,6 +2,7 @@
 
 #include <vector>
 #include <variant>
+#include <string>
 
 #include <vulkan/vulkan.h>
 
@@ -19,6 +20,7 @@ enum class ShaderStage
 
 struct UniformLayoutEntry
 {
+	std::string name;
 	uint32_t binding;
 	ShaderStage stage;
 	std::variant<StructuredBufferLayout, UniformTextureLayout> layout;

@@ -1,6 +1,7 @@
 #pragma once
 
 #include "./Buffer.hpp"
+#include "./StructuredUniformBuffer.hpp"
 #include "./Shader.hpp"
 
 namespace Shade
@@ -23,6 +24,7 @@ private:
 
     // Descriptor set used for binding the material
 	VkDescriptorSet descriptorSet;
+
 public:
     /**
      * Class constructor
@@ -31,7 +33,7 @@ public:
      * @param shader the shader that the material links to
      * @param uniformData initial uniform data of the material
      */
-	Material(VulkanApplication* app, Shader* shader, std::vector<UniformBufferData> uniformData);
+	Material(VulkanApplication* app, Shader* shader);
 
     /**
      * Class destructor
@@ -39,6 +41,31 @@ public:
      * Cleans up allocated variables created by the object.
      */
     ~Material();
+
+    /**
+     * Get the index in the material for uniform getter and setter methods
+     * 
+     * @param uniformName name of the uniform to get the index of
+     * @return the index of the uniform or '-1' if the uniform index could not
+     *  be found.
+     */
+    int getUniformIndex(std::string uniformName);
+
+    /**
+     * Set the buffer of the uniform at the given index.
+     * 
+     * @param uniformIndex index of the uniform to modify
+     * @param buffer buffer to use
+     */
+    void setUniformStructuredBuffer(int uniformIndex, StructuredUniformBuffer* buffer);
+    
+    /**
+     * Set the texture of the uniform at the given index.
+     * 
+     * @param uniformIndex index of the uniform to modify
+     * @param texture texture to use
+     */
+    void setUniformTexture(int uniformIndex, UniformTexture* texture);
 
     /**
      * Get the shader that the material is valid in.

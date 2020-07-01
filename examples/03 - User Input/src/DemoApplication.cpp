@@ -43,9 +43,9 @@ void DemoApplication::init()
     
 	ShaderLayout shaderLayout = {
 		{
-			{0, ShaderStage::VERTEX, uniformMVPLayout},
-			{1, ShaderStage::FRAGMENT, UniformTextureLayout()},
-            {2, ShaderStage::FRAGMENT, uniformLightingLayout}
+			{"uniformMVP", 0, ShaderStage::VERTEX, uniformMVPLayout},
+			{"texSampler", 1, ShaderStage::FRAGMENT, UniformTextureLayout()},
+            {"uniformLighting", 2, ShaderStage::FRAGMENT, uniformLightingLayout}
 		},
 		vertexLayout
 	};
@@ -56,7 +56,7 @@ void DemoApplication::init()
 
 	std::cout << "Loading texture..." << std::endl;
 
-	texture = new UniformTexture(this, "assets/textures/florence.png");
+	texture = UniformTexture::loadFromPath(this, "assets/textures/florence.png");
 
     std::cout << "Creating uniform buffers..." << std::endl;
 
@@ -82,7 +82,10 @@ void DemoApplication::init()
 
     basicShader = Shader::loadFromSPIRV(this, shaderLayout, "assets/shaders/vert.spv", "assets/shaders/frag.spv");
 
-	basicMaterial = new Material(this, basicShader, { uniformMVPBuffer, texture, uniformLightingBuffer });
+	basicMaterial = new Material(this, basicShader);
+    basicMaterial->setUniformStructuredBuffer(basicMaterial->getUniformIndex("uniformMVP"), uniformMVPBuffer);
+    basicMaterial->setUniformStructuredBuffer(basicMaterial->getUniformIndex("uniformLighting"), uniformLightingBuffer);
+	basicMaterial->setUniformTexture(basicMaterial->getUniformIndex("texSampler"), texture);
 
     cubeRotation = {0.0f, 0.0f};
 }
