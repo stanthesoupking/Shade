@@ -26,6 +26,12 @@ struct UniformTexturePixelData
 	int bpp; // Bits per pixel
 };
 
+enum UniformTextureFilterMode
+{
+	LINEAR,
+	NEAREST
+};
+
 class UniformTexture
 {
 private:
@@ -36,12 +42,12 @@ private:
 	VkImageView textureImageView;
 	VkSampler textureSampler;
 
-	void createTextureSampler();
+	void createTextureSampler(UniformTextureFilterMode filterMode);
 public:
-	UniformTexture(VulkanApplication* app, UniformTexturePixelData pixelData);
+	UniformTexture(VulkanApplication* app, UniformTexturePixelData pixelData, UniformTextureFilterMode filterMode = UniformTextureFilterMode::LINEAR);
 	~UniformTexture();
 
-	static UniformTexture* loadFromPath(VulkanApplication* app, std::string path);
+	static UniformTexture* loadFromPath(VulkanApplication* app, std::string path, UniformTextureFilterMode filterMode = UniformTextureFilterMode::LINEAR);
 
 	VkImageView _getTextureImageView();
 	VkSampler _getTextureSampler();
