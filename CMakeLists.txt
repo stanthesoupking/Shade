@@ -16,9 +16,6 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 
 include_directories(include)
 
-# Get GLFW3
-find_package(glfw3 3.3)
-
 # Check if library was found
 if(NOT glfw3_FOUND)
 	message("Failed to find local copy of GLFW, downloading copy of Github...")
@@ -89,6 +86,7 @@ file(GLOB Shade_INC
 
 add_library(Shade ${Shade_SRC} ${Shade_INC})
 target_link_libraries(Shade glfw glm Vulkan::Vulkan)
+target_include_directories(Shade INTERFACE include)
 
 # Example Programs:
 add_subdirectory("examples" "${CMAKE_BINARY_DIR}/examples")
