@@ -1,4 +1,7 @@
-# Shade
+<p align="center">
+<img src="./docs/logo.png" width="500">
+</p>
+
 Simple, cross-platform and low boilerplate graphics API based on Vulkan
 
 **Note:** This project is currently in its alpha stages and is highly subject to API change. 
