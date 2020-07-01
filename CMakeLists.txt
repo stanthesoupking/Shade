@@ -44,7 +44,7 @@ FetchContent_Declare(
 set(GLM_TEST_ENABLE OFF CACHE BOOL "" FORCE)
 FetchContent_MakeAvailable(glm)
 
-find_package(vulkan REQUIRED)
+find_package(Vulkan REQUIRED)
 
 file(GLOB Shade_SRC
     "src/*.cpp"
