@@ -9,6 +9,14 @@ namespace Shade
         float width;
         float height;
 
+        Rect()
+        {
+            this->x = 0;
+            this->y = 0;
+            this->width = 0;
+            this->height = 0;
+        }
+
         Rect(float _x, float _y, float _width, float _height)
         {
             this->x = _x;

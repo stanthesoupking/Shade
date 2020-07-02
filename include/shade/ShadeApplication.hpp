@@ -259,6 +259,7 @@ public:
     bool getMouseLock();
 
     void renderMesh(Mesh* mesh, Material *material);
+    void renderTriangles(VertexBuffer* vertexBuffer, IndexBuffer* indexBuffer, Material *material, int indexBufferOffset = 0);
 
 	ShadeApplicationInfo* _getApplicationInfo();
 	void _registerShader(Shader* shader);
@@ -269,6 +270,8 @@ public:
     bool getKeyReleased(Key key);
 
     Mouse getMouse();
+
+    GLFWwindow* _getGLFWWindow();
 
 };
 } // namespace Shade

@@ -20,8 +20,13 @@ struct VulkanApplicationData
     VkInstance instance;
     VkPhysicalDevice physicalDevice;
     VkDevice device;
+    
+    uint32_t graphicsQueueFamilyIndex;
     VkQueue graphicsQueue;
+
+    uint32_t presentQueueFamilyIndex;
     VkQueue presentQueue;
+
     VkSurfaceKHR surface;
 
     VkSwapchainKHR swapChain;
@@ -44,7 +49,6 @@ struct VulkanApplicationData
 
     // Current image being rendered to
     uint32_t currentImageIndex;
-    VkCommandBuffer currentCommandBuffer;
 
     VkImage depthImage;
     VkDeviceMemory depthImageMemory;
@@ -52,6 +56,7 @@ struct VulkanApplicationData
     VkFormat depthImageFormat;
 
     VmaAllocator allocator;
+    const VkAllocationCallbacks* allocationCallbacks;
 };
 
 class VulkanApplication

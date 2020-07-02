@@ -442,6 +442,9 @@ void ShadeApplication::createLogicalDevice()
         throw std::runtime_error("Shade: Failed to create logical device!");
     }
 
+    vulkanData.graphicsQueueFamilyIndex = indices.graphicsQueue.value();
+    vulkanData.presentQueueFamilyIndex = indices.presentQueue.value();
+
     vkGetDeviceQueue(vulkanData.device, indices.graphicsQueue.value(), 0, &vulkanData.graphicsQueue);
     vkGetDeviceQueue(vulkanData.device, indices.presentQueue.value(), 0, &vulkanData.presentQueue);
 }
@@ -453,6 +456,9 @@ void ShadeApplication::createAllocator()
     createInfo.device = vulkanData.device;
 
     vmaCreateAllocator(&createInfo, &vulkanData.allocator);
+
+    // Set allocator callbacks
+    vulkanData.allocationCallbacks = vulkanData.allocator->GetAllocationCallbacks();
 }
 
 void ShadeApplication::createSwapchain()
@@ -713,9 +719,9 @@ void ShadeApplication::createSemaphores()
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
     if ((vkCreateSemaphore(vulkanData.device, &semaphoreInfo,
-                          nullptr, &vulkanData.imageAvailableSemaphore) != VK_SUCCESS) |
+                           nullptr, &vulkanData.imageAvailableSemaphore) != VK_SUCCESS) |
         (vkCreateSemaphore(vulkanData.device, &semaphoreInfo,
-                          nullptr, &vulkanData.renderFinishedSemaphore) != VK_SUCCESS))
+                           nullptr, &vulkanData.renderFinishedSemaphore) != VK_SUCCESS))
     {
         throw std::runtime_error("Shade: Failed to create semaphores!");
     }
@@ -993,14 +999,16 @@ bool ShadeApplication::getMouseLock()
 
 void ShadeApplication::renderMesh(Mesh *mesh, Material *material)
 {
-    IndexBuffer *indexBuffer = mesh->getIndexBuffer();
-    VertexBuffer *vertexBuffer = mesh->getVertexBuffer();
+    renderTriangles(mesh->getVertexBuffer(), mesh->getIndexBuffer(), material);
+}
 
+void ShadeApplication::renderTriangles(VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, Material *material, int indexBufferOffset)
+{
     // Bind shader graphics pipeline
     vkCmdBindPipeline(vulkanData.commandBuffers[vulkanData.currentImageIndex],
                       VK_PIPELINE_BIND_POINT_GRAPHICS, material->getShader()->_getGraphicsPipeline());
 
-    vkCmdBindIndexBuffer(vulkanData.commandBuffers[vulkanData.currentImageIndex], indexBuffer->_getVkBuffer(), 0, VK_INDEX_TYPE_UINT32);
+    vkCmdBindIndexBuffer(vulkanData.commandBuffers[vulkanData.currentImageIndex], indexBuffer->_getVkBuffer(), indexBufferOffset, VK_INDEX_TYPE_UINT32);
 
     VkBuffer vertexBuffers[] = {vertexBuffer->_getVkBuffer()};
     VkDeviceSize vertexBufferOffsets[] = {0};
@@ -1071,12 +1079,12 @@ void ShadeApplication::updateMouseData()
     mouseData.position.x = tx / info.windowSize.width;
     mouseData.position.y = ty / info.windowSize.height;
 
-	// Calculate equalised movement taking into account aspect ratio
-	mouseData.movement.x = (mouseData.pixelMovement.x / this->info.windowSize.width)*
-		(this->info.windowSize.width / this->info.windowSize.height);
+    // Calculate equalised movement taking into account aspect ratio
+    mouseData.movement.x = (mouseData.pixelMovement.x / this->info.windowSize.width) *
+                           (this->info.windowSize.width / this->info.windowSize.height);
 
-	mouseData.movement.y = (mouseData.pixelMovement.y / this->info.windowSize.height) *
-		(this->info.windowSize.height / this->info.windowSize.width);
+    mouseData.movement.y = (mouseData.pixelMovement.y / this->info.windowSize.height) *
+                           (this->info.windowSize.height / this->info.windowSize.width);
 
     // Get mouse buttons
     mouseData.leftButtonPressed =
@@ -1090,4 +1098,9 @@ void ShadeApplication::updateMouseData()
 Mouse ShadeApplication::getMouse()
 {
     return this->mouseData;
+}
+
+GLFWwindow* ShadeApplication::_getGLFWWindow()
+{
+    return this->window;
 }
