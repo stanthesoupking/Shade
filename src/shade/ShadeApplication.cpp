@@ -100,9 +100,13 @@ ShadeApplicationFrameData ShadeApplication::getNextFrameData()
     float timeSinceStartup = glfwGetTime();
     float deltaTime = timeSinceStartup - previouseFrameData.timeSinceStartup;
 
-    return {
+    ShadeApplicationFrameData newFrameData = {
         timeSinceStartup,
         deltaTime};
+
+    previouseFrameData = newFrameData;
+
+    return newFrameData;
 }
 
 void ShadeApplication::initSystem()
