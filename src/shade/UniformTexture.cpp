@@ -9,7 +9,7 @@
 
 using namespace Shade;
 
-UniformTexture::UniformTexture(VulkanApplication *app, UniformTexturePixelData pixelData)
+UniformTexture::UniformTexture(VulkanApplication *app, UniformTexturePixelData pixelData, UniformTextureFilterMode filterMode)
 {
 	this->vulkanData = app->_getVulkanData();
 
@@ -31,7 +31,7 @@ UniformTexture::UniformTexture(VulkanApplication *app, UniformTexturePixelData p
 	app->_createImageView(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, textureImageView);
 
 	// Create texture sampler
-	createTextureSampler();
+	createTextureSampler(filterMode);
 }
 
 UniformTexture::~UniformTexture()
@@ -42,13 +42,13 @@ UniformTexture::~UniformTexture()
 	vkFreeMemory(vulkanData->device, textureImageMemory, nullptr);
 }
 
-UniformTexture* UniformTexture::loadFromPath(VulkanApplication *app, std::string path)
+UniformTexture *UniformTexture::loadFromPath(VulkanApplication *app, std::string path, UniformTextureFilterMode filterMode)
 {
 	UniformTexturePixelData pixelData = {};
 
 	// Load image at path
 	pixelData.pixels = stbi_load(path.c_str(), &pixelData.width, &pixelData.height,
-								&pixelData.channels, STBI_rgb_alpha);
+								 &pixelData.channels, STBI_rgb_alpha);
 
 	if (!pixelData.pixels)
 	{
@@ -56,7 +56,7 @@ UniformTexture* UniformTexture::loadFromPath(VulkanApplication *app, std::string
 	}
 
 	// Create texture
-	UniformTexture* texture = new UniformTexture(app, pixelData);
+	UniformTexture *texture = new UniformTexture(app, pixelData, filterMode);
 
 	// Free original image
 	stbi_image_free(pixelData.pixels);
@@ -64,16 +64,25 @@ UniformTexture* UniformTexture::loadFromPath(VulkanApplication *app, std::string
 	return texture;
 }
 
-void UniformTexture::createTextureSampler()
+void UniformTexture::createTextureSampler(UniformTextureFilterMode filterMode)
 {
 	VkSamplerCreateInfo samplerInfo = {};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
 	samplerInfo.flags = 0;
 	samplerInfo.pNext = nullptr;
 
-	// TODO: Allow for these properties to be specified
-	samplerInfo.magFilter = VK_FILTER_LINEAR;
-	samplerInfo.minFilter = VK_FILTER_LINEAR;
+	switch (filterMode)
+	{
+	case LINEAR:
+		samplerInfo.magFilter = VK_FILTER_LINEAR;
+		samplerInfo.minFilter = VK_FILTER_LINEAR;
+		break;
+	case NEAREST:
+		samplerInfo.magFilter = VK_FILTER_NEAREST;
+		samplerInfo.minFilter = VK_FILTER_NEAREST;
+		break;
+	}
+
 	samplerInfo.addressModeU = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.addressModeV = VK_SAMPLER_ADDRESS_MODE_REPEAT;
 	samplerInfo.addressModeW = VK_SAMPLER_ADDRESS_MODE_REPEAT;
