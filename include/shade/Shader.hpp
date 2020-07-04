@@ -12,17 +12,17 @@
 
 namespace Shade
 {
-enum class ShaderStage
+enum ShaderStage
 {
-	VERTEX,
-	FRAGMENT
+	VERTEX_BIT = 1,
+	FRAGMENT_BIT = 2
 };
 
 struct UniformLayoutEntry
 {
 	std::string name;
 	uint32_t binding;
-	ShaderStage stage;
+	uint32_t stage; // Shader Stage (use ShaderStage bits)
 	std::variant<StructuredBufferLayout, UniformTextureLayout> layout;
 };
 

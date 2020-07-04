@@ -24,8 +24,8 @@ void DemoApplication::init()
          {"inTexCoord", VEC2, SHADE_FLAG_TEXCOORD}}};
 
     ShaderLayout shaderLayout = {
-        {{"uData", 0, ShaderStage::VERTEX, uniformDataLayout},
-         {"texSampler", 1, ShaderStage::FRAGMENT, UniformTextureLayout()}},
+        {{"uData", 0, ShaderStage::VERTEX_BIT, uniformDataLayout},
+         {"texSampler", 1, ShaderStage::FRAGMENT_BIT, UniformTextureLayout()}},
         vertexLayout};
 
     std::cout << "Loading mesh..." << std::endl;

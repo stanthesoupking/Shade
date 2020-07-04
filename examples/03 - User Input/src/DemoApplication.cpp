@@ -43,9 +43,9 @@ void DemoApplication::init()
     
 	ShaderLayout shaderLayout = {
 		{
-			{"uniformMVP", 0, ShaderStage::VERTEX, uniformMVPLayout},
-			{"texSampler", 1, ShaderStage::FRAGMENT, UniformTextureLayout()},
-            {"uniformLighting", 2, ShaderStage::FRAGMENT, uniformLightingLayout}
+			{"uniformMVP", 0, ShaderStage::VERTEX_BIT, uniformMVPLayout},
+			{"texSampler", 1, ShaderStage::FRAGMENT_BIT, UniformTextureLayout()},
+            {"uniformLighting", 2, ShaderStage::FRAGMENT_BIT, uniformLightingLayout}
 		},
 		vertexLayout
 	};

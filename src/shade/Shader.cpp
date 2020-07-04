@@ -182,13 +182,15 @@ void Shader::createGraphicsPipeline()
 			}
 
 			uniformLayoutBinding.descriptorCount = 1;
-			if (entry.stage == ShaderStage::VERTEX)
+			uniformLayoutBinding.stageFlags = 0;
+			if (entry.stage & ShaderStage::VERTEX_BIT)
 			{
-				uniformLayoutBinding.stageFlags = VK_SHADER_STAGE_VERTEX_BIT;
+				uniformLayoutBinding.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
 			}
-			else if (entry.stage == ShaderStage::FRAGMENT)
+			
+			if (entry.stage & ShaderStage::FRAGMENT_BIT)
 			{
-				uniformLayoutBinding.stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT;
+				uniformLayoutBinding.stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
 			}
 			uniformLayoutBinding.pImmutableSamplers = nullptr;
 
