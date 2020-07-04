@@ -17,20 +17,17 @@ set(CMAKE_CXX_FLAGS_RELEASE "-O3")
 include_directories(include)
 
 # Check if library was found
-if(NOT glfw3_FOUND)
-	message("Failed to find local copy of GLFW, downloading copy of Github...")
-	set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
-	set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
-	set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_DOCS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_TESTS OFF CACHE BOOL "" FORCE)
+set(GLFW_BUILD_EXAMPLES OFF CACHE BOOL "" FORCE)
 
-	FetchContent_Declare(
-		glfw3
-		GIT_REPOSITORY https://github.com/glfw/glfw
-		GIT_TAG 3.3
-	)
+FetchContent_Declare(
+	glfw3
+	GIT_REPOSITORY https://github.com/glfw/glfw
+	GIT_TAG 3.3
+)
 
-	FetchContent_MakeAvailable(glfw3)
-endif()
+FetchContent_MakeAvailable(glfw3)
 
 # Get GLM
 FetchContent_Declare(

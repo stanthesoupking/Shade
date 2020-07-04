@@ -42,12 +42,12 @@ private:
 	VkImageView textureImageView;
 	VkSampler textureSampler;
 
-	void createTextureSampler(UniformTextureFilterMode filterMode);
+	void createTextureSampler(UniformTextureFilterMode filterMode, uint32_t mipLevels = 1);
 public:
-	UniformTexture(VulkanApplication* app, UniformTexturePixelData pixelData, UniformTextureFilterMode filterMode = UniformTextureFilterMode::LINEAR);
+	UniformTexture(VulkanApplication* app, UniformTexturePixelData pixelData, UniformTextureFilterMode filterMode = UniformTextureFilterMode::LINEAR, bool enableMipmaps = true);
 	~UniformTexture();
 
-	static UniformTexture* loadFromPath(VulkanApplication* app, std::string path, UniformTextureFilterMode filterMode = UniformTextureFilterMode::LINEAR);
+	static UniformTexture* loadFromPath(VulkanApplication* app, std::string path, UniformTextureFilterMode filterMode = UniformTextureFilterMode::LINEAR, bool enableMipmaps = true);
 
 	VkImageView _getTextureImageView();
 	VkSampler _getTextureSampler();

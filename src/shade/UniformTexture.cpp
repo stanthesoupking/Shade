@@ -6,10 +6,11 @@
 #include "shade/Buffer.hpp"
 
 #include <iostream>
+#include <cmath>
 
 using namespace Shade;
 
-UniformTexture::UniformTexture(VulkanApplication *app, UniformTexturePixelData pixelData, UniformTextureFilterMode filterMode)
+UniformTexture::UniformTexture(VulkanApplication *app, UniformTexturePixelData pixelData, UniformTextureFilterMode filterMode, bool enableMipmaps)
 {
 	this->vulkanData = app->_getVulkanData();
 
@@ -18,20 +19,38 @@ UniformTexture::UniformTexture(VulkanApplication *app, UniformTexturePixelData p
 	// Create staging buffer
 	Buffer stagingBuffer = Buffer(app, pixelData.pixels, stride, 1, TRANSFER);
 
+	uint32_t mipLevels = 1;
+	VkImageUsageFlags usageFlags = VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT;
+
+	if (enableMipmaps)
+	{
+		// Calculate mip levels
+		mipLevels = static_cast<uint32_t>(std::floor(std::log2(std::max(pixelData.width, pixelData.height)))) + 1;
+
+		usageFlags |= VK_IMAGE_USAGE_TRANSFER_SRC_BIT;
+	}
+
 	app->_createImage(pixelData.width, pixelData.height,
 					  VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_TILING_OPTIMAL,
-					  VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT,
-					  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory);
+					  usageFlags,
+					  VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT, textureImage, textureImageMemory, mipLevels);
 
-	app->_transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL);
+	app->_transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_UNDEFINED, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, mipLevels);
 	app->_copyBufferToImage(stagingBuffer._getVkBuffer(), textureImage, static_cast<uint32_t>(pixelData.width), static_cast<uint32_t>(pixelData.height));
-	app->_transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	if (enableMipmaps)
+	{
+		app->_generateMipmaps(textureImage, pixelData.width, pixelData.height, mipLevels);
+	}
+	else
+	{
+		app->_transitionImageLayout(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL);
+	}
 
 	// Create image view
-	app->_createImageView(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, textureImageView);
+	app->_createImageView(textureImage, VK_FORMAT_R8G8B8A8_UNORM, VK_IMAGE_ASPECT_COLOR_BIT, textureImageView, mipLevels);
 
 	// Create texture sampler
-	createTextureSampler(filterMode);
+	createTextureSampler(filterMode, mipLevels);
 }
 
 UniformTexture::~UniformTexture()
@@ -42,7 +61,7 @@ UniformTexture::~UniformTexture()
 	vkFreeMemory(vulkanData->device, textureImageMemory, nullptr);
 }
 
-UniformTexture *UniformTexture::loadFromPath(VulkanApplication *app, std::string path, UniformTextureFilterMode filterMode)
+UniformTexture *UniformTexture::loadFromPath(VulkanApplication *app, std::string path, UniformTextureFilterMode filterMode, bool enableMipmaps)
 {
 	UniformTexturePixelData pixelData = {};
 
@@ -56,7 +75,7 @@ UniformTexture *UniformTexture::loadFromPath(VulkanApplication *app, std::string
 	}
 
 	// Create texture
-	UniformTexture *texture = new UniformTexture(app, pixelData, filterMode);
+	UniformTexture *texture = new UniformTexture(app, pixelData, filterMode, enableMipmaps);
 
 	// Free original image
 	stbi_image_free(pixelData.pixels);
@@ -64,7 +83,7 @@ UniformTexture *UniformTexture::loadFromPath(VulkanApplication *app, std::string
 	return texture;
 }
 
-void UniformTexture::createTextureSampler(UniformTextureFilterMode filterMode)
+void UniformTexture::createTextureSampler(UniformTextureFilterMode filterMode, uint32_t mipLevels)
 {
 	VkSamplerCreateInfo samplerInfo = {};
 	samplerInfo.sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO;
@@ -93,10 +112,11 @@ void UniformTexture::createTextureSampler(UniformTextureFilterMode filterMode)
 	samplerInfo.unnormalizedCoordinates = VK_FALSE;
 	samplerInfo.compareEnable = VK_FALSE;
 	samplerInfo.compareOp = VK_COMPARE_OP_ALWAYS;
+
 	samplerInfo.mipmapMode = VK_SAMPLER_MIPMAP_MODE_LINEAR;
 	samplerInfo.mipLodBias = 0.0f;
 	samplerInfo.minLod = 0.0f;
-	samplerInfo.maxLod = 0.0f;
+	samplerInfo.maxLod = static_cast<float>(mipLevels);
 
 	if (vkCreateSampler(vulkanData->device, &samplerInfo, nullptr, &textureSampler) != VK_SUCCESS)
 	{

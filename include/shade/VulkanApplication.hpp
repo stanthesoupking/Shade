@@ -12,89 +12,94 @@
 
 namespace Shade
 {
-// Forward declaration of shader
-class Shader;
+    // Forward declaration of shader
+    class Shader;
 
-struct VulkanApplicationData
-{
-    VkInstance instance;
-    VkPhysicalDevice physicalDevice;
-    VkDevice device;
-    
-    uint32_t graphicsQueueFamilyIndex;
-    VkQueue graphicsQueue;
-
-    uint32_t presentQueueFamilyIndex;
-    VkQueue presentQueue;
-
-    VkSurfaceKHR surface;
-
-    VkSwapchainKHR swapChain;
-    std::vector<VkImage> swapChainImages;
-    VkFormat swapChainImageFormat;
-    VkExtent2D swapChainExtent;
-    std::vector<VkImageView> swapChainImageViews;
-    std::vector<VkFramebuffer> swapChainFramebuffers;
-
-    VkRenderPass renderPass;
-    VkPipelineLayout pipelineLayout;
-
-    VkCommandPool commandPool;
-    std::vector<VkCommandBuffer> commandBuffers;
-
-    VkSemaphore imageAvailableSemaphore;
-    VkSemaphore renderFinishedSemaphore;
-
-    VkDescriptorPool descriptorPool;
-
-    // Current image being rendered to
-    uint32_t currentImageIndex;
-
-    VkImage depthImage;
-    VkDeviceMemory depthImageMemory;
-    VkImageView depthImageView;
-    VkFormat depthImageFormat;
-
-    VmaAllocator allocator;
-    const VkAllocationCallbacks* allocationCallbacks;
-};
-
-class VulkanApplication
-{
-private:
-protected:
-    VulkanApplicationData vulkanData;
-
-public:
-    VulkanApplication(){};
-    ~VulkanApplication(){};
-
-    VulkanApplicationData *_getVulkanData()
+    struct VulkanApplicationData
     {
-        return &this->vulkanData;
+        VkInstance instance;
+        VkPhysicalDevice physicalDevice;
+        VkDevice device;
+
+        uint32_t graphicsQueueFamilyIndex;
+        VkQueue graphicsQueue;
+
+        uint32_t presentQueueFamilyIndex;
+        VkQueue presentQueue;
+
+        VkSurfaceKHR surface;
+
+        VkSwapchainKHR swapChain;
+        std::vector<VkImage> swapChainImages;
+        VkFormat swapChainImageFormat;
+        VkExtent2D swapChainExtent;
+        std::vector<VkImageView> swapChainImageViews;
+        std::vector<VkFramebuffer> swapChainFramebuffers;
+
+        VkRenderPass renderPass;
+        VkPipelineLayout pipelineLayout;
+
+        VkCommandPool commandPool;
+        std::vector<VkCommandBuffer> commandBuffers;
+
+        VkSemaphore imageAvailableSemaphore;
+        VkSemaphore renderFinishedSemaphore;
+
+        VkDescriptorPool descriptorPool;
+
+        // Current image being rendered to
+        uint32_t currentImageIndex;
+
+        VkImage depthImage;
+        VkDeviceMemory depthImageMemory;
+        VkImageView depthImageView;
+        VkFormat depthImageFormat;
+
+        VmaAllocator allocator;
+        const VkAllocationCallbacks *allocationCallbacks;
     };
 
-    virtual void _registerShader(Shader *shader) = 0;
-    virtual void _unregisterShader(Shader *shader) = 0;
-    virtual std::vector<Shader *> _getShaders() = 0;
+    class VulkanApplication
+    {
+    private:
+    protected:
+        VulkanApplicationData vulkanData;
 
-    // Various utility functions
-    uint32_t _findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+    public:
+        VulkanApplication(){};
+        ~VulkanApplication(){};
 
-    void _createImage(uint32_t width, uint32_t height,
-                      VkFormat format, VkImageTiling tiling,
-                      VkImageUsageFlags usage,
-                      VkMemoryPropertyFlags properties,
-                      VkImage &image, VkDeviceMemory &imageMemory);
+        VulkanApplicationData *_getVulkanData()
+        {
+            return &this->vulkanData;
+        };
 
-    void _createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView& imageView);
+        virtual void _registerShader(Shader *shader) = 0;
+        virtual void _unregisterShader(Shader *shader) = 0;
+        virtual std::vector<Shader *> _getShaders() = 0;
 
-    VkCommandBuffer _beginSingleTimeCommands();
-    void _endSingleTimeCommands(VkCommandBuffer commandBuffer);
-    void _copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
-    void _copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
-    void _transitionImageLayout(VkImage image, VkFormat format,
-                                VkImageLayout oldLayout,
-                                VkImageLayout newLayout);
-};
+        // Various utility functions
+        uint32_t _findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties);
+
+        void _createImage(uint32_t width, uint32_t height,
+                          VkFormat format, VkImageTiling tiling,
+                          VkImageUsageFlags usage,
+                          VkMemoryPropertyFlags properties,
+                          VkImage &image, VkDeviceMemory &imageMemory,
+                          uint32_t mipLevels = 1);
+
+        void _createImageView(VkImage image, VkFormat format, VkImageAspectFlags aspectFlags, VkImageView &imageView,
+                              uint32_t mipLevels = 1);
+
+        void _generateMipmaps(VkImage image, uint32_t width, uint32_t height, uint32_t mipLevels);
+
+        VkCommandBuffer _beginSingleTimeCommands();
+        void _endSingleTimeCommands(VkCommandBuffer commandBuffer);
+        void _copyBuffer(VkBuffer srcBuffer, VkBuffer dstBuffer, VkDeviceSize size);
+        void _copyBufferToImage(VkBuffer buffer, VkImage image, uint32_t width, uint32_t height);
+        void _transitionImageLayout(VkImage image, VkFormat format,
+                                    VkImageLayout oldLayout,
+                                    VkImageLayout newLayout,
+                                    uint32_t mipLevels = 1);
+    };
 } // namespace Shade
