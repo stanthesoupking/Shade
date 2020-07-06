@@ -76,8 +76,9 @@ void ShadeApplication::start()
         // Update mouse data
         updateMouseData();
 
-        this->update(
-            getNextFrameData());
+        // Update frame data (fixed delta time etc.)
+        updateFrameData();
+        this->update();
 
         this->renderStart();
         this->render();
@@ -93,20 +94,6 @@ void ShadeApplication::start()
 void ShadeApplication::exit()
 {
     this->running = false;
-}
-
-ShadeApplicationFrameData ShadeApplication::getNextFrameData()
-{
-    float timeSinceStartup = glfwGetTime();
-    float deltaTime = timeSinceStartup - previouseFrameData.timeSinceStartup;
-
-    ShadeApplicationFrameData newFrameData = {
-        timeSinceStartup,
-        deltaTime};
-
-    previouseFrameData = newFrameData;
-
-    return newFrameData;
 }
 
 void ShadeApplication::initSystem()
@@ -1104,7 +1091,24 @@ Mouse ShadeApplication::getMouse()
     return this->mouseData;
 }
 
-GLFWwindow* ShadeApplication::_getGLFWWindow()
+GLFWwindow *ShadeApplication::_getGLFWWindow()
 {
     return this->window;
+}
+
+float ShadeApplication::getFixedDeltaTime()
+{
+    return fixedDeltaTime;
+}
+
+float ShadeApplication::getTimeSinceStartup()
+{
+    return glfwGetTime();
+}
+
+void ShadeApplication::updateFrameData()
+{
+    float currentTime = getTimeSinceStartup();
+    fixedDeltaTime = currentTime - prevTime;
+    prevTime = currentTime;
 }

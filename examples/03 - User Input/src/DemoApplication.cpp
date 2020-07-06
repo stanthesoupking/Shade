@@ -102,7 +102,7 @@ void DemoApplication::destroy()
     delete uniformLightingBuffer;
 }
 
-void DemoApplication::update(ShadeApplicationFrameData frameData)
+void DemoApplication::update()
 {
     // Check if escape button has been pressed
     if (getKeyPressed(SHADE_KEY_ESCAPE))
