@@ -147,7 +147,7 @@ void Shader::createGraphicsPipeline()
 
 	VkVertexInputBindingDescription bindingDescription = {};
 	bindingDescription.binding = 0;
-	bindingDescription.stride = shaderLayout.vertexLayout.getStride(VERTEX);
+	bindingDescription.stride = shaderLayout.vertexLayout.getStride(app, VERTEX);
 	bindingDescription.inputRate = VK_VERTEX_INPUT_RATE_VERTEX;
 
 	auto attributeDescriptions = shaderLayout.vertexLayout._getAttributeDescriptions();
@@ -174,7 +174,7 @@ void Shader::createGraphicsPipeline()
 
 			if (std::holds_alternative<StructuredBufferLayout>(entry.layout))
 			{
-				uniformLayoutBinding.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+				uniformLayoutBinding.descriptorType = entry.dynamic ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 			}
 			else if (std::holds_alternative<UniformTextureLayout>(entry.layout))
 			{
@@ -187,7 +187,7 @@ void Shader::createGraphicsPipeline()
 			{
 				uniformLayoutBinding.stageFlags |= VK_SHADER_STAGE_VERTEX_BIT;
 			}
-			
+
 			if (entry.stage & ShaderStage::FRAGMENT_BIT)
 			{
 				uniformLayoutBinding.stageFlags |= VK_SHADER_STAGE_FRAGMENT_BIT;
@@ -238,7 +238,7 @@ void Shader::createGraphicsPipeline()
 		VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
 	rasterizer.depthClampEnable = VK_FALSE;
 	rasterizer.rasterizerDiscardEnable = VK_FALSE;
-	rasterizer.polygonMode = VK_POLYGON_MODE_FILL;
+	rasterizer.polygonMode = VK_POLYGON_MODE_FILL; // In future: allow this to be changed
 	rasterizer.lineWidth = 1.0f;
 	rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
 	rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
@@ -319,7 +319,7 @@ void Shader::createGraphicsPipeline()
 	depthStencil.maxDepthBounds = 1.0f; // Optional
 	depthStencil.stencilTestEnable = VK_FALSE;
 	depthStencil.front = {}; // Optional
-	depthStencil.back = {};  // Optional
+	depthStencil.back = {};	 // Optional
 
 	VkGraphicsPipelineCreateInfo pipelineInfo = {};
 	pipelineInfo.sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO;
@@ -369,4 +369,21 @@ ShaderLayout::ShaderLayout(std::vector<UniformLayoutEntry> uniformsLayout, Struc
 
 ShaderLayout::~ShaderLayout()
 {
+}
+
+std::vector<uint32_t> ShaderLayout::getDynamicUniformStrides(VulkanApplication *app)
+{
+	std::vector<uint32_t> strides;
+	
+	// Collect dynamic offset strides
+	for (UniformLayoutEntry entry : uniformsLayout)
+	{
+		if (entry.dynamic)
+		{
+			StructuredBufferLayout layout = std::get<StructuredBufferLayout>(entry.layout);
+			strides.push_back(layout.getStride(app, BufferType::DYNAMIC_UNIFORM));
+		}
+	}
+
+	return strides;
 }

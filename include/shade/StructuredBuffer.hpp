@@ -2,6 +2,8 @@
 
 #include "Buffer.hpp"
 
+#include "shade/VulkanApplication.hpp"
+
 #include <string>
 #include <optional>
 #include <vector>
@@ -57,11 +59,11 @@ public:
 	StructuredBufferLayout(std::vector<StructuredBufferLayoutEntry> layout);
 	~StructuredBufferLayout();
 
-	uint32_t getStride(BufferType bufferType);
-	uint32_t getAlignedStride();
+	uint32_t getStride(VulkanApplication* app, BufferType bufferType);
+	uint32_t getAlignedStride(VulkanApplication* app, BufferType bufferType);
 	uint32_t getUnalignedStride();
 
-	void *alignData(void *data, uint32_t count);
+	void *alignData(VulkanApplication* app, void *data, uint32_t count, BufferType bufferType);
 	uint32_t getLargestBufferVariableAlignment();
 	std::vector<VkVertexInputAttributeDescription> _getAttributeDescriptions();
 
@@ -71,16 +73,17 @@ public:
 class StructuredBuffer : public Buffer
 {
 private:
+	VulkanApplication* app;
 	StructuredBufferLayout layout;
 	BufferType bufferType;
 
-	static void* prepareData(void* data, uint32_t count, BufferType bufferType, StructuredBufferLayout layout);
+	static void* prepareData(VulkanApplication *app, void* data, uint32_t count, BufferType bufferType, StructuredBufferLayout layout);
 
 public:
-	StructuredBuffer(VulkanApplication *app, StructuredBufferLayout layout,
+	StructuredBuffer(VulkanApplication *_app, StructuredBufferLayout layout,
 		void *data, uint32_t count, BufferType bufferType = VERTEX, BufferStorage bufferStorage = GPU);
 	~StructuredBuffer();
 
-	void setData(void *data, uint32_t count);
+	void setData(void *data, uint32_t count, uint32_t offset = 0);
 };
 } // namespace Shade

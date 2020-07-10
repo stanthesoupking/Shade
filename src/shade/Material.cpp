@@ -1,5 +1,7 @@
 #include "shade/Material.hpp"
 
+#include <iostream>
+
 using namespace Shade;
 
 /**
@@ -9,16 +11,24 @@ using namespace Shade;
  * @param shader the shader that the material links to
  * @param uniformData initial uniform data of the material
  */
-Material::Material(VulkanApplication *app, Shader *shader)
+Material::Material(VulkanApplication *_app, Shader *shader)
 {
-	this->vulkanData = app->_getVulkanData();
+	app = _app;
+	vulkanData = app->_getVulkanData();
 
 	this->shader = shader;
 
-	// ShaderLayout shaderLayout = shader->getShaderLayout();
-
 	// Create descriptor sets
-	this->descriptorSet = shader->_getNewDescriptorSet();
+	descriptorSet = shader->_getNewDescriptorSet();
+
+	// Create default offsets
+	dynamicUniformOffsets = new std::vector<uint32_t>();
+
+	int totalDynamicUniforms = shader->getShaderLayout().getDynamicUniformStrides(app).size();
+	for(int i = 0; i < totalDynamicUniforms; i++)
+	{
+		dynamicUniformOffsets->push_back(0);
+	}
 }
 
 /**
@@ -30,6 +40,8 @@ Material::~Material()
 {
 	vkFreeDescriptorSets(vulkanData->device, vulkanData->descriptorPool, 1,
 						 &descriptorSet);
+
+	delete dynamicUniformOffsets;
 }
 
 /**
@@ -72,7 +84,7 @@ void Material::setUniformStructuredBuffer(int uniformIndex, StructuredUniformBuf
 	VkDescriptorBufferInfo bufferInfo;
 	bufferInfo.buffer = buffer->_getVkBuffer();
 	bufferInfo.offset = 0;
-	bufferInfo.range = buffer->getTotalSize();
+	bufferInfo.range = buffer->getStride();
 
 	ShaderLayout shaderLayout = shader->getShaderLayout();
 	UniformLayoutEntry uniformEntry = shaderLayout.uniformsLayout.at(uniformIndex);
@@ -82,7 +94,7 @@ void Material::setUniformStructuredBuffer(int uniformIndex, StructuredUniformBuf
 	descriptorWrite.dstSet = descriptorSet;
 	descriptorWrite.dstBinding = uniformEntry.binding;
 	descriptorWrite.dstArrayElement = 0;
-	descriptorWrite.descriptorType = VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
+	descriptorWrite.descriptorType = buffer->getDynamic() ? VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC : VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER;
 	descriptorWrite.descriptorCount = 1;
 	descriptorWrite.pBufferInfo = &bufferInfo;
 	descriptorWrite.pImageInfo = nullptr;
@@ -148,4 +160,29 @@ Shader *Material::getShader()
 VkDescriptorSet Material::_getDescriptorSet()
 {
 	return this->descriptorSet;
+}
+
+/**
+ * Get list of dynamic uniform offsets
+ */
+std::vector<uint32_t> *Material::getDynamicUniformOffsets()
+{
+	return dynamicUniformOffsets;
+}
+
+/**
+ * Get list of vulkan dynamic uniform offsets
+ */
+std::vector<uint32_t> Material::_getVkDynamicUniformOffsets()
+{
+	std::vector<uint32_t> offsets = shader->getShaderLayout().getDynamicUniformStrides(app);
+
+	// Apply offsets
+	int i = 0;
+	for(auto offset : *dynamicUniformOffsets)
+	{
+		offsets[i++] *= offset;
+	}
+
+	return offsets;
 }

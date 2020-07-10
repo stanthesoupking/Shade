@@ -5,14 +5,18 @@
 using namespace Shade;
 
 Buffer::Buffer(VulkanApplication *app, void *data, uint32_t stride,
-               uint32_t count, BufferType bufferType, BufferStorage bufferStorage)
+               uint32_t size, BufferType bufferType, BufferStorage bufferStorage)
 {
     this->app = app;
     this->vulkanData = app->_getVulkanData();
     this->bufferType = bufferType;
     this->bufferStorage = bufferStorage;
+    this->size = size;
+    this->stride = stride;
 
-    createBuffer(data, stride, count);
+    this->totalBufferSize = stride * size;
+
+    createBuffer(data);
 }
 
 Buffer::~Buffer()
@@ -39,12 +43,8 @@ uint32_t Buffer::findMemoryType(uint32_t typeFilter,
     throw std::runtime_error("Shade: Failed to find suitable memory type!");
 }
 
-void Buffer::createBuffer(void *data, uint32_t stride, uint32_t count)
+void Buffer::createBuffer(void *data)
 {
-    this->stride = stride;
-    this->count = count;
-    this->totalBufferSize = stride * count;
-
     VkBufferCreateInfo bufferInfo = {};
     bufferInfo.sType = VK_STRUCTURE_TYPE_BUFFER_CREATE_INFO;
     bufferInfo.pNext = nullptr;
@@ -59,7 +59,7 @@ void Buffer::createBuffer(void *data, uint32_t stride, uint32_t count)
     {
         bufferInfo.usage = VK_BUFFER_USAGE_INDEX_BUFFER_BIT;
     }
-    else if (bufferType == UNIFORM)
+    else if ((bufferType == UNIFORM) || (bufferType == DYNAMIC_UNIFORM))
     {
         bufferInfo.usage = VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT;
     }
@@ -88,18 +88,21 @@ void Buffer::createBuffer(void *data, uint32_t stride, uint32_t count)
     if (data != nullptr)
     {
         // Fill buffer
-        fillBuffer(data);
+        fillBuffer(data, size, 0);
     }
 }
 
-void Buffer::fillBuffer(void *data)
+void Buffer::fillBuffer(void *data, uint32_t count, uint32_t offset)
 {
+    // Total size of data that will be modified
+    int dataSize = count * stride;
+
     if (bufferStorage == CPU)
     {
         // Copy directly to buffer
         void *mappedData;
         vmaMapMemory(vulkanData->allocator, allocation, &mappedData);
-        memcpy(mappedData, data, totalBufferSize);
+        memcpy((char*) mappedData + (stride * offset), data, dataSize);
         vmaUnmapMemory(vulkanData->allocator, allocation);
     }
     else if (bufferStorage == GPU)
@@ -132,14 +135,14 @@ void Buffer::fillBuffer(void *data)
         // Fill staging buffer
         void *mappedData;
         vmaMapMemory(vulkanData->allocator, stagingBufferAllocation, &mappedData);
-        memcpy(mappedData, data, totalBufferSize);
+        memcpy(mappedData, data, dataSize);
         vmaUnmapMemory(vulkanData->allocator, stagingBufferAllocation);
 
         // Copy data from staging buffer to GPU buffer
         VkBufferCopy regions[1];
-        regions[0].srcOffset = 0;//stagingBufferAllocationInfo.offset;
-        regions[0].dstOffset = 0;//allocationInfo.offset;
-        regions[0].size = totalBufferSize;
+        regions[0].srcOffset = 0;
+        regions[0].dstOffset = offset * stride; 
+        regions[0].size = dataSize;
 
         VkCommandBuffer commandBuffer = app->_beginSingleTimeCommands();
         vkCmdCopyBuffer(commandBuffer, stagingBuffer, buffer, 1, regions);
@@ -163,7 +166,7 @@ VkBuffer Buffer::_getVkBuffer()
 
 uint32_t Buffer::getElementCount()
 {
-    return this->count;
+    return this->size;
 }
 
 uint32_t Buffer::getTotalSize()
@@ -171,18 +174,23 @@ uint32_t Buffer::getTotalSize()
     return this->totalBufferSize;
 }
 
-void Buffer::setData(void *data, uint32_t stride, uint32_t count)
+void Buffer::setData(void *data, uint32_t count, uint32_t offset)
 {
-    if (stride * count == totalBufferSize)
+    if ((stride * (count + offset)) <= totalBufferSize)
     {
-        fillBuffer(data);
+        // Use original buffer
+        fillBuffer(data, count, offset);
     }
-    else
+    else if(offset == 0)
     {
         // Free old buffer data
         freeBuffer();
 
+        size = count;
+
         // Set new data
-        createBuffer(data, stride, count);
+        createBuffer(data);
+    } else {
+        throw std::runtime_error("Buffer resizing is not yet supported for offseted buffer-set commands.");
     }
 }

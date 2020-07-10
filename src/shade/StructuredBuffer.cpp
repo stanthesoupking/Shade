@@ -5,16 +5,17 @@
 
 using namespace Shade;
 
-StructuredBuffer::StructuredBuffer(VulkanApplication *app,
+StructuredBuffer::StructuredBuffer(VulkanApplication *_app,
 								   StructuredBufferLayout layout,
 								   void *data, uint32_t count,
 								   BufferType bufferType,
 								   BufferStorage bufferStorage)
 	: Buffer(
-		  app, prepareData(data, count, bufferType, layout),
-		  layout.getStride(bufferType),
+		  _app, prepareData(_app, data, count, bufferType, layout),
+		  layout.getStride(_app, bufferType),
 		  count, bufferType, bufferStorage)
 {
+	app = _app;
 	this->layout = layout;
 	this->bufferType = bufferType;
 }
@@ -23,12 +24,12 @@ StructuredBuffer::~StructuredBuffer()
 {
 }
 
-void *StructuredBuffer::prepareData(void *data, uint32_t count, BufferType bufferType, StructuredBufferLayout layout)
+void *StructuredBuffer::prepareData(VulkanApplication *app, void *data, uint32_t count, BufferType bufferType, StructuredBufferLayout layout)
 {
-	if (bufferType == UNIFORM)
+	if ((bufferType == UNIFORM) || (bufferType == DYNAMIC_UNIFORM))
 	{
 		// Align data designated for uniform usage
-		return layout.alignData(data, count);
+		return layout.alignData(app, data, count, bufferType);
 	}
 	else
 	{
@@ -37,12 +38,12 @@ void *StructuredBuffer::prepareData(void *data, uint32_t count, BufferType buffe
 	}
 }
 
-void StructuredBuffer::setData(void *data, uint32_t count)
+void StructuredBuffer::setData(void *data, uint32_t count, uint32_t offset)
 {
 	// Align data to meet Vulkan specifications
-	void *preparedData = prepareData(data, count, bufferType, layout);
+	void *preparedData = prepareData(app, data, count, bufferType, layout);
 
-	Buffer::setData(preparedData, layout.getStride(bufferType), count);
+	Buffer::setData(preparedData, count, offset);
 
 	// Free aligned data
 	free(preparedData);
@@ -150,12 +151,12 @@ VkFormat StructuredBufferLayout::getBufferVariableTypeFormat(StructuredBufferVar
 	}
 }
 
-uint32_t StructuredBufferLayout::getStride(BufferType bufferType)
+uint32_t StructuredBufferLayout::getStride(VulkanApplication *app, BufferType bufferType)
 {
-	if (bufferType == UNIFORM)
+	if ((bufferType == UNIFORM) || (bufferType == DYNAMIC_UNIFORM))
 	{
 		// Align data designated for uniform usage
-		return getAlignedStride();
+		return getAlignedStride(app, bufferType);
 	}
 	else
 	{
@@ -164,7 +165,7 @@ uint32_t StructuredBufferLayout::getStride(BufferType bufferType)
 	}
 }
 
-uint32_t StructuredBufferLayout::getAlignedStride()
+uint32_t StructuredBufferLayout::getAlignedStride(VulkanApplication *app, BufferType bufferType)
 {
 	uint32_t largestAlignment = getLargestBufferVariableAlignment();
 	uint32_t stride = 0;
@@ -175,7 +176,16 @@ uint32_t StructuredBufferLayout::getAlignedStride()
 												   getBufferVariableTypeAlignment(entry.type));
 	}
 
-	return ceil(stride / (float)largestAlignment) * largestAlignment;
+	uint32_t alignment = ceil(stride / (float)largestAlignment) * largestAlignment;
+
+	if (bufferType == DYNAMIC_UNIFORM)
+	{
+		// Make a multiple of device's minStorageBufferOffsetAlignment
+		VkDeviceSize minOffset = app->_getVulkanDataCopy().physicalDeviceProperties.limits.minUniformBufferOffsetAlignment;
+		alignment = ceil(alignment / (float)minOffset) * minOffset;
+	}
+
+	return alignment;
 }
 
 uint32_t StructuredBufferLayout::getUnalignedStride()
@@ -230,15 +240,15 @@ std::vector<VkVertexInputAttributeDescription> StructuredBufferLayout::_getAttri
  * Return an aligned copy of the given data. The returned data will be valid for
  * use in a Vulkan SPIR-V shader.
  */
-void *StructuredBufferLayout::alignData(void *data, uint32_t count)
+void *StructuredBufferLayout::alignData(VulkanApplication *app, void *data, uint32_t count, BufferType bufferType)
 {
 	uint32_t alignment = getLargestBufferVariableAlignment();
 
 	// Allocate new data
-	void *newData = malloc(getAlignedStride() * count);
+	void *newData = malloc(getAlignedStride(app, bufferType) * count);
 
 	uint32_t uStructSize = getUnalignedStructStride();
-	uint32_t aStructSize = getAlignedStride();
+	uint32_t aStructSize = getAlignedStride(app, bufferType);
 	uint32_t structSizeDiff = aStructSize - uStructSize;
 
 	uint32_t dataPos = 0;

@@ -36,7 +36,7 @@ private:
 public:
     ShadeApplicationInfo preInit();
     void init();
-    void update(ShadeApplicationFrameData frameData);
+    void update();
     void render();
     void destroy();
 };

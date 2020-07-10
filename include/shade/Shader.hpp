@@ -24,6 +24,7 @@ struct UniformLayoutEntry
 	uint32_t binding;
 	uint32_t stage; // Shader Stage (use ShaderStage bits)
 	std::variant<StructuredBufferLayout, UniformTextureLayout> layout;
+	bool dynamic = false;
 };
 
 class ShaderLayout
@@ -36,6 +37,8 @@ class ShaderLayout
 		ShaderLayout() { uniformsLayout = {}; vertexLayout = {}; }
 		ShaderLayout(std::vector<UniformLayoutEntry> uniformsLayout, StructuredBufferLayout vertexLayout);
 		~ShaderLayout();
+
+		std::vector<uint32_t> getDynamicUniformStrides(VulkanApplication* app);
 };
 
 class Shader

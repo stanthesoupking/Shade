@@ -296,7 +296,7 @@ Mesh *Mesh::loadFromPLY(VulkanApplication *app, std::string path,
     {
         if (element.type == ElementType::VERTEX)
         {
-            uint32_t vertexStride = vertexLayout.getStride(VERTEX);
+            uint32_t vertexStride = vertexLayout.getStride(app, VERTEX);
             vertexCount = element.count;
 
             vertices = malloc(vertexStride * vertexCount);

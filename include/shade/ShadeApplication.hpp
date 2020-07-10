@@ -128,12 +128,6 @@ enum Key
     SHADE_KEY_TAB = GLFW_KEY_TAB
 };
 
-struct ShadeApplicationFrameData
-{
-    float timeSinceStartup; // Time in seconds since application initialised
-    float deltaTime; // Delta time since last frame
-};
-
 struct ShadeApplicationInfo
 {
     std::string windowTitle = "Shade Application";
@@ -169,16 +163,11 @@ private:
 
     GLFWwindow *window;
 
-    ShadeApplicationFrameData previouseFrameData {
-        0.0f, // Time since startup
-        0.0f // Placeholder delta time
-    };
-
     Mouse mouseData;
     Mouse previousMouseData;
 
     const std::vector<const char *> validationLayers = {
-        "VK_LAYER_KHRONOS_validation"};
+         "VK_LAYER_KHRONOS_validation"};
 
     const std::vector<const char *> deviceExtensions = {
         VK_KHR_SWAPCHAIN_EXTENSION_NAME};
@@ -217,7 +206,7 @@ private:
 	void cleanupSwapchain();
     void cleanupDepthResources();
 
-    ShadeApplicationFrameData getNextFrameData();
+    void updateFrameData();
 
     void renderStart();
     void renderPresent();
@@ -225,6 +214,9 @@ private:
     void updateMouseData();
 
     bool running;
+
+    float prevTime = 0; // Keep track of application time for calculating delta time
+    float fixedDeltaTime = 0; // Delta time (seconds) since last frame
 
 	/**
 	 * Keep track of loaded shaders for updating on window resize events.
@@ -243,7 +235,7 @@ public:
     // Overridable methods:
     virtual ShadeApplicationInfo preInit() = 0;
     virtual void init() = 0;
-    virtual void update(ShadeApplicationFrameData frameData) = 0;
+    virtual void update() = 0;
     virtual void render() = 0;
     virtual void destroy() = 0;
 
@@ -265,6 +257,16 @@ public:
 	void _registerShader(Shader* shader);
 	void _unregisterShader(Shader* shader);
 	std::vector<Shader*> _getShaders();
+
+    /**
+     * Get the delta time (seconds) since the previous update.
+     */
+    float getFixedDeltaTime(); 
+    
+    /**
+     * Get total time (seconds) since application startup
+     */
+    float getTimeSinceStartup(); 
 
     bool getKeyPressed(Key key);
     bool getKeyReleased(Key key);

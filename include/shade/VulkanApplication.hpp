@@ -19,6 +19,7 @@ namespace Shade
     {
         VkInstance instance;
         VkPhysicalDevice physicalDevice;
+        VkPhysicalDeviceProperties physicalDeviceProperties;
         VkDevice device;
 
         uint32_t graphicsQueueFamilyIndex;
@@ -71,7 +72,12 @@ namespace Shade
 
         VulkanApplicationData *_getVulkanData()
         {
-            return &this->vulkanData;
+            return &vulkanData;
+        };
+
+        VulkanApplicationData _getVulkanDataCopy()
+        {
+            return vulkanData;
         };
 
         virtual void _registerShader(Shader *shader) = 0;

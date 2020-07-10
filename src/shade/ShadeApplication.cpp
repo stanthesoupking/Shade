@@ -10,7 +10,7 @@
 
 using namespace Shade;
 
-ShadeApplication::ShadeApplication()
+ShadeApplication::ShadeApplication() : VulkanApplication()
 {
 }
 
@@ -64,7 +64,7 @@ void ShadeApplication::start()
     // Initialise user-variables
     this->init();
 
-    // Warm mouse data -- to get initial mouse movement of zero
+    // Prepare mouse data -- to get initial mouse movement of zero
     updateMouseData();
 
     // Enter main loop
@@ -76,8 +76,9 @@ void ShadeApplication::start()
         // Update mouse data
         updateMouseData();
 
-        this->update(
-            getNextFrameData());
+        // Update frame data (fixed delta time etc.)
+        updateFrameData();
+        this->update();
 
         this->renderStart();
         this->render();
@@ -93,20 +94,6 @@ void ShadeApplication::start()
 void ShadeApplication::exit()
 {
     this->running = false;
-}
-
-ShadeApplicationFrameData ShadeApplication::getNextFrameData()
-{
-    float timeSinceStartup = glfwGetTime();
-    float deltaTime = timeSinceStartup - previouseFrameData.timeSinceStartup;
-
-    ShadeApplicationFrameData newFrameData = {
-        timeSinceStartup,
-        deltaTime};
-
-    previouseFrameData = newFrameData;
-
-    return newFrameData;
 }
 
 void ShadeApplication::initSystem()
@@ -259,6 +246,12 @@ void ShadeApplication::pickPhysicalDevice()
         if (isDeviceSuitable(tDevice))
         {
             vulkanData.physicalDevice = tDevice;
+
+            // Get properties
+            VkPhysicalDeviceProperties deviceProperties;
+            vkGetPhysicalDeviceProperties(tDevice, &deviceProperties);
+            vulkanData.physicalDeviceProperties = deviceProperties;
+
             break;
         }
     }
@@ -292,7 +285,6 @@ bool ShadeApplication::isDeviceSuitable(VkPhysicalDevice device)
     }
 
     return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
-    ;
 }
 
 QueueFamilyIndices ShadeApplication::findQueueFamilies(VkPhysicalDevice device)
@@ -770,14 +762,15 @@ void ShadeApplication::createDescriptorPool()
 {
     VkDescriptorPoolSize poolSizes[] = {
         {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1024},
+        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1024},
         {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1024}};
 
     VkDescriptorPoolCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
     createInfo.pNext = nullptr;
     createInfo.flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT;
-    createInfo.maxSets = 1024; // PLACEHOLDER VALUE, research this
-    createInfo.poolSizeCount = 2;
+    createInfo.maxSets = 2048; // PLACEHOLDER VALUE, research this
+    createInfo.poolSizeCount = 3;
     createInfo.pPoolSizes = poolSizes;
 
     vkCreateDescriptorPool(vulkanData.device, &createInfo, nullptr, &vulkanData.descriptorPool);
@@ -1020,9 +1013,12 @@ void ShadeApplication::renderTriangles(VertexBuffer *vertexBuffer, IndexBuffer *
 
     VkDescriptorSet descriptorSet = material->_getDescriptorSet();
 
+    // Get dynamic uniform offsets
+    std::vector<uint32_t> dynamicUniformOffsets = material->_getVkDynamicUniformOffsets();
+
     vkCmdBindDescriptorSets(vulkanData.commandBuffers[vulkanData.currentImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
                             material->getShader()->_getGraphicsPipelineLayout(),
-                            0, 1, &descriptorSet, 0, nullptr);
+                            0, 1, &descriptorSet, dynamicUniformOffsets.size(), dynamicUniformOffsets.data());
 
     vkCmdDrawIndexed(vulkanData.commandBuffers[vulkanData.currentImageIndex], indexBuffer->getElementCount(), 1, 0, 0, 0);
 }
@@ -1104,7 +1100,24 @@ Mouse ShadeApplication::getMouse()
     return this->mouseData;
 }
 
-GLFWwindow* ShadeApplication::_getGLFWWindow()
+GLFWwindow *ShadeApplication::_getGLFWWindow()
 {
     return this->window;
+}
+
+float ShadeApplication::getFixedDeltaTime()
+{
+    return fixedDeltaTime;
+}
+
+float ShadeApplication::getTimeSinceStartup()
+{
+    return glfwGetTime();
+}
+
+void ShadeApplication::updateFrameData()
+{
+    float currentTime = getTimeSinceStartup();
+    fixedDeltaTime = currentTime - prevTime;
+    prevTime = currentTime;
 }

@@ -5,15 +5,23 @@
 
 namespace Shade
 {
-class StructuredUniformBuffer : public StructuredBuffer
-{
-private:
-public:
-	StructuredUniformBuffer(VulkanApplication* app,
-		StructuredBufferLayout uniformLayout, void* data,
-		uint32_t location = 0);
-	~StructuredUniformBuffer();
+	class StructuredUniformBuffer : public StructuredBuffer
+	{
+	private:
+		VulkanApplication *app;
+		uint32_t size;
+		bool dynamic;
+		StructuredBufferLayout uniformLayout;
 
-	void setData(void* data);
-};
-};
+	public:
+		StructuredUniformBuffer(VulkanApplication *_app,
+								StructuredBufferLayout _uniformLayout, void *data, uint32_t size = 1, bool dynamic = false);
+		~StructuredUniformBuffer();
+
+		void setData(void *data, uint32_t count = 1, uint32_t offset = 0);
+
+		bool getDynamic();
+
+		uint32_t getStride();
+	};
+}; // namespace Shade

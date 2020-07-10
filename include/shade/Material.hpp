@@ -4,6 +4,8 @@
 #include "./StructuredUniformBuffer.hpp"
 #include "./Shader.hpp"
 
+#include <vector>
+
 namespace Shade
 {
 typedef std::variant<Buffer*, UniformTexture*> UniformBufferData;
@@ -17,6 +19,7 @@ typedef std::variant<Buffer*, UniformTexture*> UniformBufferData;
 class Material
 {
 private:
+    VulkanApplication* app;
     VulkanApplicationData* vulkanData;
 
     // Shader that this material is linked to
@@ -24,6 +27,9 @@ private:
 
     // Descriptor set used for binding the material
 	VkDescriptorSet descriptorSet;
+
+    // Offsets for dynamic structured uniform buffers
+    std::vector<uint32_t>* dynamicUniformOffsets;
 
 public:
     /**
@@ -82,5 +88,15 @@ public:
      * @return the material's uniform descriptor sets
      */
     VkDescriptorSet _getDescriptorSet();
+
+    /**
+     * Get list of dynamic uniform offsets
+     */
+    std::vector<uint32_t>* getDynamicUniformOffsets();
+
+    /**
+     * Get list of dynamic uniform offsets
+     */
+    std::vector<uint32_t> _getVkDynamicUniformOffsets();
 };
 } // namespace Shade
