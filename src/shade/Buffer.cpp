@@ -66,14 +66,14 @@ uint32_t Buffer::getTotalSize() { return this->totalBufferSize; }
  */
 void Buffer::setData(void *data, uint32_t count, uint32_t offset)
 {
-    if ((stride * (count + offset)) <= totalBufferSize)
+    if ((count + offset) <= size)
     {
         // Use original buffer
         fillBuffer(data, count, offset);
     }
     else if (offset == 0)
     {
-        // Free old buffer data
+        // Free old buffer
         freeBuffer();
 
         size = count;
@@ -83,8 +83,31 @@ void Buffer::setData(void *data, uint32_t count, uint32_t offset)
     }
     else
     {
-        throw std::runtime_error(
-            "Buffer resizing is not yet supported for offseted buffer-set commands.");
+        uint32_t newSize = offset + count;
+        uint32_t newBufferSize = newSize * stride;
+
+        // Get current data
+        void *oldData = getData();
+
+        // Free old buffer
+        freeBuffer();
+
+        void *newData = malloc(totalBufferSize);
+
+        // Copy old data
+        memcpy(newData, oldData, totalBufferSize);
+
+        // Append new data
+        memcpy(((char *)newData) + offset * stride, data, count * stride);
+
+        // Set new data
+        size = newSize;
+        totalBufferSize = newBufferSize;
+
+        createBuffer(newData);
+
+        free(newData);
+        free(oldData);
     }
 }
 
@@ -93,14 +116,14 @@ void Buffer::setData(void *data, uint32_t count, uint32_t offset)
  *
  * WARNING: It is your responsibility to free this pointer after you are finished with it.
  *
- * @param count number of elements to return (set to -1 to gather all elements)
+ * @param count number of elements to return (set to 0 to gather all elements)
  * @param offset offset in terms of data elements
  *
  * @returns slice of current buffer contents
  */
 void *Buffer::getData(uint32_t count, uint32_t offset)
 {
-    if (count == -1)
+    if (count == 0)
     {
         // Select entire buffer
         count = size;

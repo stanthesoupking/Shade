@@ -110,11 +110,11 @@ public:
      *
      * WARNING: It is your responsibility to free this pointer after you are finished with it.
      *
-     * @param count number of elements to return (set to -1 to gather all elements)
+     * @param count number of elements to return (set to 0 to gather all elements)
      * @param offset offset in terms of data elements
      *
      * @returns slice of current buffer contents
      */
-    void *getData(uint32_t count = -1, uint32_t offset = 0);
+    void *getData(uint32_t count = 0, uint32_t offset = 0);
 };
 } // namespace Shade
