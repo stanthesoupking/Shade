@@ -6,18 +6,21 @@
 using namespace Shade;
 
 Shader *Shader::loadFromSPIRV(VulkanApplication *app, ShaderLayout shaderLayout,
-                              const char *vertPath, const char *fragPath)
+                              const char *vertPath, const char *fragPath, int shaderFlags)
 {
-    return new Shader(app, shaderLayout, readFileBytes(vertPath), readFileBytes(fragPath));
+    return new Shader(app, shaderLayout, readFileBytes(vertPath), readFileBytes(fragPath),
+                      shaderFlags);
 }
 
 Shader::Shader(VulkanApplication *app, ShaderLayout shaderLayout, std::vector<char> vertSource,
-               std::vector<char> fragSource)
+               std::vector<char> fragSource, int shaderFlags)
 {
     this->app = app;
     this->vulkanData = app->_getVulkanData();
 
     this->shaderLayout = shaderLayout;
+
+    this->shaderFlags = shaderFlags;
 
     // Load shader modules
     vertexModule = createShaderModule(vertSource);
@@ -222,7 +225,14 @@ void Shader::createGraphicsPipeline()
     rasterizer.sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO;
     rasterizer.depthClampEnable = VK_FALSE;
     rasterizer.rasterizerDiscardEnable = VK_FALSE;
-    rasterizer.polygonMode = VK_POLYGON_MODE_FILL; // In future: allow this to be changed
+    if ((shaderFlags & ShaderFlags::WIREFRAME) == ShaderFlags::WIREFRAME)
+    {
+        rasterizer.polygonMode = VK_POLYGON_MODE_LINE;
+    }
+    else
+    {
+        rasterizer.polygonMode = VK_POLYGON_MODE_FILL; // In future: allow this to be changed
+    }
     rasterizer.lineWidth = 1.0f;
     rasterizer.cullMode = VK_CULL_MODE_BACK_BIT;
     rasterizer.frontFace = VK_FRONT_FACE_CLOCKWISE;
@@ -289,8 +299,27 @@ void Shader::createGraphicsPipeline()
     // Enable depth stencil
     VkPipelineDepthStencilStateCreateInfo depthStencil = {};
     depthStencil.sType = VK_STRUCTURE_TYPE_PIPELINE_DEPTH_STENCIL_STATE_CREATE_INFO;
-    depthStencil.depthTestEnable = VK_TRUE;
+
+    if ((shaderFlags & ShaderFlags::DISABLE_DEPTH_TEST) == ShaderFlags::DISABLE_DEPTH_TEST)
+    {
+        depthStencil.depthTestEnable = VK_FALSE;
+    }
+    else
+    {
+        depthStencil.depthTestEnable = VK_TRUE;
+    }
+
     depthStencil.depthWriteEnable = VK_TRUE;
+
+    if ((shaderFlags & ShaderFlags::DISABLE_DEPTH_WRITE) == ShaderFlags::DISABLE_DEPTH_WRITE)
+    {
+        depthStencil.depthWriteEnable = VK_FALSE;
+    }
+    else
+    {
+        depthStencil.depthWriteEnable = VK_TRUE;
+    }
+
     depthStencil.depthCompareOp = VK_COMPARE_OP_LESS;
     depthStencil.depthBoundsTestEnable = VK_FALSE;
     depthStencil.minDepthBounds = 0.0f; // Optional
