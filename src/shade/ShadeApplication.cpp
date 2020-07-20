@@ -1,18 +1,16 @@
 #include "shade/ShadeApplication.hpp"
 
-#include <iostream>
-#include <set>
 #include <algorithm>
 #include <array>
+#include <iostream>
+#include <set>
 
 #define VMA_IMPLEMENTATION
 #include "shade/vendor/vk_mem_alloc.hpp"
 
 using namespace Shade;
 
-ShadeApplication::ShadeApplication() : VulkanApplication()
-{
-}
+ShadeApplication::ShadeApplication() : VulkanApplication() {}
 
 ShadeApplication::~ShadeApplication()
 {
@@ -53,8 +51,11 @@ ShadeApplication::~ShadeApplication()
     glfwTerminate();
 }
 
-void ShadeApplication::start()
+void ShadeApplication::start(int argc, char **argv)
 {
+    this->argc = argc;
+    this->argv = argv;
+
     // Get application info
     this->info = this->preInit();
 
@@ -91,10 +92,7 @@ void ShadeApplication::start()
     this->destroy();
 }
 
-void ShadeApplication::exit()
-{
-    this->running = false;
-}
+void ShadeApplication::exit() { this->running = false; }
 
 void ShadeApplication::initSystem()
 {
@@ -138,8 +136,7 @@ void ShadeApplication::initWindow()
         monitor = nullptr;
     }
 
-    window = glfwCreateWindow(this->info.windowSize.width,
-                              this->info.windowSize.height,
+    window = glfwCreateWindow(this->info.windowSize.width, this->info.windowSize.height,
                               this->info.windowTitle.c_str(), monitor, nullptr);
 
     glfwSetWindowUserPointer(window, this);
@@ -178,7 +175,8 @@ void ShadeApplication::createInstance()
     applicationInfo.sType = VK_STRUCTURE_TYPE_APPLICATION_INFO;
     applicationInfo.pNext = nullptr;
     applicationInfo.pEngineName = "Shade";
-    applicationInfo.engineVersion = VK_MAKE_VERSION(SHADE_VERSION_MAJOR, SHADE_VERSION_MINOR, SHADE_VERSION_PATCH);
+    applicationInfo.engineVersion =
+        VK_MAKE_VERSION(SHADE_VERSION_MAJOR, SHADE_VERSION_MINOR, SHADE_VERSION_PATCH);
 
     // TODO: Get application info from user
     applicationInfo.pApplicationName = "Shade Application";
@@ -200,8 +198,7 @@ void ShadeApplication::createInstance()
 
     if (_SHADE_ENABLE_VALIDATION_LAYERS)
     {
-        createInfo.enabledLayerCount =
-            static_cast<uint32_t>(validationLayers.size());
+        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
 
         createInfo.ppEnabledLayerNames = validationLayers.data();
     }
@@ -218,7 +215,8 @@ void ShadeApplication::createInstance()
 
 void ShadeApplication::createSurface()
 {
-    if (glfwCreateWindowSurface(vulkanData.instance, window, nullptr, &vulkanData.surface) != VK_SUCCESS)
+    if (glfwCreateWindowSurface(vulkanData.instance, window, nullptr, &vulkanData.surface) !=
+        VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to create window surface!");
     }
@@ -233,8 +231,7 @@ void ShadeApplication::pickPhysicalDevice()
 
     if (physicalDeviceCount == 0)
     {
-        throw std::runtime_error(
-            "Shade: Failed to find GPUs with Vulkan support!");
+        throw std::runtime_error("Shade: Failed to find GPUs with Vulkan support!");
     }
 
     std::vector<VkPhysicalDevice> physicalDevices;
@@ -277,14 +274,14 @@ bool ShadeApplication::isDeviceSuitable(VkPhysicalDevice device)
     bool swapChainAdequate = false;
     if (extensionsSupported)
     {
-        SwapChainSupportDetails swapChainSupport =
-            querySwapChainSupport(device);
+        SwapChainSupportDetails swapChainSupport = querySwapChainSupport(device);
 
-        swapChainAdequate = !swapChainSupport.formats.empty() &&
-                            !swapChainSupport.presentModes.empty();
+        swapChainAdequate =
+            !swapChainSupport.formats.empty() && !swapChainSupport.presentModes.empty();
     }
 
-    return indices.isComplete() && extensionsSupported && swapChainAdequate && supportedFeatures.samplerAnisotropy;
+    return indices.isComplete() && extensionsSupported && swapChainAdequate &&
+           supportedFeatures.samplerAnisotropy;
 }
 
 QueueFamilyIndices ShadeApplication::findQueueFamilies(VkPhysicalDevice device)
@@ -326,17 +323,14 @@ QueueFamilyIndices ShadeApplication::findQueueFamilies(VkPhysicalDevice device)
 bool ShadeApplication::checkDeviceExtensionsSupport(VkPhysicalDevice device)
 {
     uint32_t extensionCount;
-    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount,
-                                         nullptr);
+    vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount, nullptr);
 
     std::vector<VkExtensionProperties> availableExtensions(extensionCount);
     vkEnumerateDeviceExtensionProperties(device, nullptr, &extensionCount,
                                          availableExtensions.data());
 
     // Create set from device extensions
-    std::set<std::string>
-        requiredExtensions(deviceExtensions.begin(),
-                           deviceExtensions.end());
+    std::set<std::string> requiredExtensions(deviceExtensions.begin(), deviceExtensions.end());
 
     // Erase extensions that are available
     for (const auto &extension : availableExtensions)
@@ -351,12 +345,10 @@ SwapChainSupportDetails ShadeApplication::querySwapChainSupport(VkPhysicalDevice
 {
     SwapChainSupportDetails details;
 
-    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, vulkanData.surface,
-                                              &details.capabilities);
+    vkGetPhysicalDeviceSurfaceCapabilitiesKHR(device, vulkanData.surface, &details.capabilities);
 
     uint32_t formatCount;
-    vkGetPhysicalDeviceSurfaceFormatsKHR(device, vulkanData.surface, &formatCount,
-                                         nullptr);
+    vkGetPhysicalDeviceSurfaceFormatsKHR(device, vulkanData.surface, &formatCount, nullptr);
 
     if (formatCount != 0)
     {
@@ -366,14 +358,14 @@ SwapChainSupportDetails ShadeApplication::querySwapChainSupport(VkPhysicalDevice
     }
 
     uint32_t presentModeCount;
-    vkGetPhysicalDeviceSurfacePresentModesKHR(device, vulkanData.surface,
-                                              &presentModeCount, nullptr);
+    vkGetPhysicalDeviceSurfacePresentModesKHR(device, vulkanData.surface, &presentModeCount,
+                                              nullptr);
 
     if (presentModeCount != 0)
     {
         details.presentModes.resize(presentModeCount);
-        vkGetPhysicalDeviceSurfacePresentModesKHR(device, vulkanData.surface,
-                                                  &presentModeCount, details.presentModes.data());
+        vkGetPhysicalDeviceSurfacePresentModesKHR(device, vulkanData.surface, &presentModeCount,
+                                                  details.presentModes.data());
     }
 
     return details;
@@ -395,9 +387,8 @@ void ShadeApplication::createLogicalDevice()
 
     std::vector<VkDeviceQueueCreateInfo> queueCreateInfos;
 
-    std::set<uint32_t> uniqueQueueFamilies = {
-        indices.graphicsQueue.value(),
-        indices.presentQueue.value()};
+    std::set<uint32_t> uniqueQueueFamilies = {indices.graphicsQueue.value(),
+                                              indices.presentQueue.value()};
 
     float priority = 1.0f;
     for (uint32_t index : uniqueQueueFamilies)
@@ -418,14 +409,12 @@ void ShadeApplication::createLogicalDevice()
 
     createInfo.pEnabledFeatures = &deviceFeatures;
 
-    createInfo.enabledExtensionCount =
-        static_cast<uint32_t>(deviceExtensions.size());
+    createInfo.enabledExtensionCount = static_cast<uint32_t>(deviceExtensions.size());
     createInfo.ppEnabledExtensionNames = deviceExtensions.data();
 
     if (_SHADE_ENABLE_VALIDATION_LAYERS)
     {
-        createInfo.enabledLayerCount =
-            static_cast<uint32_t>(validationLayers.size());
+        createInfo.enabledLayerCount = static_cast<uint32_t>(validationLayers.size());
         createInfo.ppEnabledLayerNames = validationLayers.data();
     }
     else
@@ -433,7 +422,8 @@ void ShadeApplication::createLogicalDevice()
         createInfo.enabledLayerCount = 0;
     }
 
-    if (vkCreateDevice(vulkanData.physicalDevice, &createInfo, nullptr, &vulkanData.device) != VK_SUCCESS)
+    if (vkCreateDevice(vulkanData.physicalDevice, &createInfo, nullptr, &vulkanData.device) !=
+        VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to create logical device!");
     }
@@ -441,7 +431,8 @@ void ShadeApplication::createLogicalDevice()
     vulkanData.graphicsQueueFamilyIndex = indices.graphicsQueue.value();
     vulkanData.presentQueueFamilyIndex = indices.presentQueue.value();
 
-    vkGetDeviceQueue(vulkanData.device, indices.graphicsQueue.value(), 0, &vulkanData.graphicsQueue);
+    vkGetDeviceQueue(vulkanData.device, indices.graphicsQueue.value(), 0,
+                     &vulkanData.graphicsQueue);
     vkGetDeviceQueue(vulkanData.device, indices.presentQueue.value(), 0, &vulkanData.presentQueue);
 }
 
@@ -464,7 +455,8 @@ void ShadeApplication::createSwapchain()
     uint32_t imageCount = swapChainSupport.capabilities.minImageCount + 1;
 
     // Check that image count is not exceeding the maximum supported value
-    if ((swapChainSupport.capabilities.maxImageCount > 0) && imageCount > swapChainSupport.capabilities.maxImageCount)
+    if ((swapChainSupport.capabilities.maxImageCount > 0) &&
+        imageCount > swapChainSupport.capabilities.maxImageCount)
     {
         imageCount = swapChainSupport.capabilities.maxImageCount;
     }
@@ -491,8 +483,7 @@ void ShadeApplication::createSwapchain()
     createInfo.imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT;
 
     QueueFamilyIndices indices = findQueueFamilies(vulkanData.physicalDevice);
-    uint32_t queueFamilyIndices[] = {indices.graphicsQueue.value(),
-                                     indices.presentQueue.value()};
+    uint32_t queueFamilyIndices[] = {indices.graphicsQueue.value(), indices.presentQueue.value()};
 
     if (indices.graphicsQueue != indices.presentQueue)
     {
@@ -513,7 +504,8 @@ void ShadeApplication::createSwapchain()
     createInfo.clipped = VK_TRUE;
     createInfo.oldSwapchain = VK_NULL_HANDLE;
 
-    if (vkCreateSwapchainKHR(vulkanData.device, &createInfo, nullptr, &vulkanData.swapChain) != VK_SUCCESS)
+    if (vkCreateSwapchainKHR(vulkanData.device, &createInfo, nullptr, &vulkanData.swapChain) !=
+        VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to create swap chain!");
     }
@@ -521,14 +513,14 @@ void ShadeApplication::createSwapchain()
     // Get swapchain images
     vkGetSwapchainImagesKHR(vulkanData.device, vulkanData.swapChain, &imageCount, nullptr);
     vulkanData.swapChainImages.resize(imageCount);
-    vkGetSwapchainImagesKHR(vulkanData.device, vulkanData.swapChain, &imageCount, vulkanData.swapChainImages.data());
+    vkGetSwapchainImagesKHR(vulkanData.device, vulkanData.swapChain, &imageCount,
+                            vulkanData.swapChainImages.data());
 
     vulkanData.swapChainImageFormat = surfaceFormat.format;
     vulkanData.swapChainExtent = imageExtent;
 }
 
-VkExtent2D ShadeApplication::getOptimalSwapExtent(const VkSurfaceCapabilitiesKHR &
-                                                      capabilities)
+VkExtent2D ShadeApplication::getOptimalSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities)
 {
     if (capabilities.currentExtent.width != UINT32_MAX)
     {
@@ -542,19 +534,18 @@ VkExtent2D ShadeApplication::getOptimalSwapExtent(const VkSurfaceCapabilitiesKHR
         // Get most optimal dimensions for extent
         actualExtent.width =
             std::max(capabilities.minImageExtent.width,
-                     std::min(capabilities.maxImageExtent.width,
-                              actualExtent.width));
+                     std::min(capabilities.maxImageExtent.width, actualExtent.width));
 
         actualExtent.height =
             std::max(capabilities.minImageExtent.height,
-                     std::min(capabilities.maxImageExtent.height,
-                              actualExtent.height));
+                     std::min(capabilities.maxImageExtent.height, actualExtent.height));
 
         return actualExtent;
     }
 }
 
-VkPresentModeKHR ShadeApplication::getOptimalSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes)
+VkPresentModeKHR ShadeApplication::getOptimalSwapPresentMode(
+    const std::vector<VkPresentModeKHR> &availablePresentModes)
 {
     for (const auto &availablePresentMode : availablePresentModes)
     {
@@ -567,13 +558,13 @@ VkPresentModeKHR ShadeApplication::getOptimalSwapPresentMode(const std::vector<V
     return VK_PRESENT_MODE_FIFO_KHR;
 }
 
-VkSurfaceFormatKHR ShadeApplication::getOptimalSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats)
+VkSurfaceFormatKHR ShadeApplication::getOptimalSwapSurfaceFormat(
+    const std::vector<VkSurfaceFormatKHR> &availableFormats)
 {
     for (const auto &availableFormat : availableFormats)
     {
         if (availableFormat.format == VK_FORMAT_B8G8R8A8_UNORM &&
-            availableFormat.colorSpace ==
-                VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
+            availableFormat.colorSpace == VK_COLOR_SPACE_SRGB_NONLINEAR_KHR)
         {
             return availableFormat;
         }
@@ -653,13 +644,11 @@ void ShadeApplication::createRenderPass()
     VkSubpassDependency dependency = {};
     dependency.srcSubpass = VK_SUBPASS_EXTERNAL;
     dependency.dstSubpass = 0;
-    dependency.srcStageMask =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.srcStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
     dependency.srcAccessMask = 0;
-    dependency.dstStageMask =
-        VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
-    dependency.dstAccessMask = VK_ACCESS_COLOR_ATTACHMENT_READ_BIT |
-                               VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+    dependency.dstStageMask = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+    dependency.dstAccessMask =
+        VK_ACCESS_COLOR_ATTACHMENT_READ_BIT | VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
 
     std::array<VkClearValue, 2> clearValues = {};
     clearValues[0].color = {0.0f, 0.0f, 0.0f, 1.0f};
@@ -675,8 +664,8 @@ void ShadeApplication::createRenderPass()
     renderPassInfo.dependencyCount = 1;
     renderPassInfo.pDependencies = &dependency;
 
-    if (vkCreateRenderPass(vulkanData.device, &renderPassInfo, nullptr,
-                           &vulkanData.renderPass) != VK_SUCCESS)
+    if (vkCreateRenderPass(vulkanData.device, &renderPassInfo, nullptr, &vulkanData.renderPass) !=
+        VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to create render pass!");
     }
@@ -688,9 +677,8 @@ void ShadeApplication::createFramebuffers()
 
     for (size_t i = 0; i < vulkanData.swapChainImageViews.size(); i++)
     {
-        std::array<VkImageView, 2> attachments = {
-            vulkanData.swapChainImageViews[i],
-            vulkanData.depthImageView};
+        std::array<VkImageView, 2> attachments = {vulkanData.swapChainImageViews[i],
+                                                  vulkanData.depthImageView};
 
         VkFramebufferCreateInfo framebufferInfo = {};
         framebufferInfo.sType = VK_STRUCTURE_TYPE_FRAMEBUFFER_CREATE_INFO;
@@ -714,10 +702,10 @@ void ShadeApplication::createSemaphores()
     VkSemaphoreCreateInfo semaphoreInfo = {};
     semaphoreInfo.sType = VK_STRUCTURE_TYPE_SEMAPHORE_CREATE_INFO;
 
-    if ((vkCreateSemaphore(vulkanData.device, &semaphoreInfo,
-                           nullptr, &vulkanData.imageAvailableSemaphore) != VK_SUCCESS) |
-        (vkCreateSemaphore(vulkanData.device, &semaphoreInfo,
-                           nullptr, &vulkanData.renderFinishedSemaphore) != VK_SUCCESS))
+    if ((vkCreateSemaphore(vulkanData.device, &semaphoreInfo, nullptr,
+                           &vulkanData.imageAvailableSemaphore) != VK_SUCCESS) |
+        (vkCreateSemaphore(vulkanData.device, &semaphoreInfo, nullptr,
+                           &vulkanData.renderFinishedSemaphore) != VK_SUCCESS))
     {
         throw std::runtime_error("Shade: Failed to create semaphores!");
     }
@@ -725,17 +713,15 @@ void ShadeApplication::createSemaphores()
 
 void ShadeApplication::createCommandPool()
 {
-    QueueFamilyIndices queueFamilyIndices =
-        findQueueFamilies(vulkanData.physicalDevice);
+    QueueFamilyIndices queueFamilyIndices = findQueueFamilies(vulkanData.physicalDevice);
 
     VkCommandPoolCreateInfo poolInfo = {};
     poolInfo.sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO;
-    poolInfo.queueFamilyIndex =
-        queueFamilyIndices.graphicsQueue.value();
+    poolInfo.queueFamilyIndex = queueFamilyIndices.graphicsQueue.value();
     poolInfo.flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT;
 
-    if (vkCreateCommandPool(vulkanData.device, &poolInfo, nullptr,
-                            &vulkanData.commandPool) != VK_SUCCESS)
+    if (vkCreateCommandPool(vulkanData.device, &poolInfo, nullptr, &vulkanData.commandPool) !=
+        VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to create command pool!");
     }
@@ -751,8 +737,8 @@ void ShadeApplication::createCommandBuffers()
     allocInfo.level = VK_COMMAND_BUFFER_LEVEL_PRIMARY;
     allocInfo.commandBufferCount = (uint32_t)vulkanData.commandBuffers.size();
 
-    if (vkAllocateCommandBuffers(vulkanData.device, &allocInfo,
-                                 vulkanData.commandBuffers.data()) != VK_SUCCESS)
+    if (vkAllocateCommandBuffers(vulkanData.device, &allocInfo, vulkanData.commandBuffers.data()) !=
+        VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to allocate command buffers!");
     }
@@ -760,10 +746,9 @@ void ShadeApplication::createCommandBuffers()
 
 void ShadeApplication::createDescriptorPool()
 {
-    VkDescriptorPoolSize poolSizes[] = {
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1024},
-        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1024},
-        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1024}};
+    VkDescriptorPoolSize poolSizes[] = {{VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER, 1024},
+                                        {VK_DESCRIPTOR_TYPE_UNIFORM_BUFFER_DYNAMIC, 1024},
+                                        {VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1024}};
 
     VkDescriptorPoolCreateInfo createInfo = {};
     createInfo.sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO;
@@ -781,15 +766,13 @@ void ShadeApplication::createDepthResources()
     // Create depth image
     vulkanData.depthImageFormat = VK_FORMAT_D32_SFLOAT; // Widely supported format
 
-    _createImage(vulkanData.swapChainExtent.width,
-                 vulkanData.swapChainExtent.height, vulkanData.depthImageFormat,
-                 VK_IMAGE_TILING_OPTIMAL,
-                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT,
-                 VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
+    _createImage(vulkanData.swapChainExtent.width, vulkanData.swapChainExtent.height,
+                 vulkanData.depthImageFormat, VK_IMAGE_TILING_OPTIMAL,
+                 VK_IMAGE_USAGE_DEPTH_STENCIL_ATTACHMENT_BIT, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT,
                  vulkanData.depthImage, vulkanData.depthImageMemory);
 
-    _createImageView(vulkanData.depthImage, vulkanData.depthImageFormat,
-                     VK_IMAGE_ASPECT_DEPTH_BIT, vulkanData.depthImageView);
+    _createImageView(vulkanData.depthImage, vulkanData.depthImageFormat, VK_IMAGE_ASPECT_DEPTH_BIT,
+                     vulkanData.depthImageView);
 
     _transitionImageLayout(vulkanData.depthImage, vulkanData.depthImageFormat,
                            VK_IMAGE_LAYOUT_UNDEFINED,
@@ -832,7 +815,9 @@ void ShadeApplication::cleanupSwapchain()
         vkDestroyFramebuffer(vulkanData.device, vulkanData.swapChainFramebuffers[i], nullptr);
     }
 
-    vkFreeCommandBuffers(vulkanData.device, vulkanData.commandPool, static_cast<uint32_t>(vulkanData.commandBuffers.size()), vulkanData.commandBuffers.data());
+    vkFreeCommandBuffers(vulkanData.device, vulkanData.commandPool,
+                         static_cast<uint32_t>(vulkanData.commandBuffers.size()),
+                         vulkanData.commandBuffers.data());
 
     vkDestroyRenderPass(vulkanData.device, vulkanData.renderPass, nullptr);
 
@@ -854,11 +839,13 @@ void ShadeApplication::cleanupDepthResources()
 void ShadeApplication::renderStart()
 {
     // Get current image index
-    vkAcquireNextImageKHR(vulkanData.device, vulkanData.swapChain, UINT64_MAX, vulkanData.imageAvailableSemaphore,
-                          nullptr, &vulkanData.currentImageIndex);
+    vkAcquireNextImageKHR(vulkanData.device, vulkanData.swapChain, UINT64_MAX,
+                          vulkanData.imageAvailableSemaphore, nullptr,
+                          &vulkanData.currentImageIndex);
 
     // Reset command buffer
-    vkResetCommandBuffer(vulkanData.commandBuffers[vulkanData.currentImageIndex], VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
+    vkResetCommandBuffer(vulkanData.commandBuffers[vulkanData.currentImageIndex],
+                         VK_COMMAND_BUFFER_RESET_RELEASE_RESOURCES_BIT);
 
     // Begin recording command buffer
     VkCommandBufferBeginInfo beginInfo = {};
@@ -866,11 +853,10 @@ void ShadeApplication::renderStart()
     beginInfo.flags = 0;
     beginInfo.pInheritanceInfo = nullptr;
 
-    if (vkBeginCommandBuffer(vulkanData.commandBuffers[vulkanData.currentImageIndex],
-                             &beginInfo) != VK_SUCCESS)
+    if (vkBeginCommandBuffer(vulkanData.commandBuffers[vulkanData.currentImageIndex], &beginInfo) !=
+        VK_SUCCESS)
     {
-        throw std::runtime_error(
-            "Shade: Failed to begin recording command buffer!");
+        throw std::runtime_error("Shade: Failed to begin recording command buffer!");
     }
 
     VkRenderPassBeginInfo renderPassInfo = {};
@@ -881,7 +867,8 @@ void ShadeApplication::renderStart()
     renderPassInfo.renderArea.extent = vulkanData.swapChainExtent;
 
     std::array<VkClearValue, 2> clearValues = {};
-    clearValues[0].color = {info.clearColour.r, info.clearColour.g, info.clearColour.b, info.clearColour.a};
+    clearValues[0].color = {info.clearColour.r, info.clearColour.g, info.clearColour.b,
+                            info.clearColour.a};
     clearValues[1].depthStencil = {1.0f, 0};
 
     renderPassInfo.clearValueCount = static_cast<uint32_t>(clearValues.size());
@@ -906,8 +893,7 @@ void ShadeApplication::renderPresent()
     submitInfo.sType = VK_STRUCTURE_TYPE_SUBMIT_INFO;
 
     VkSemaphore waitSemaphores[] = {vulkanData.imageAvailableSemaphore};
-    VkPipelineStageFlags waitStages[] =
-        {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
+    VkPipelineStageFlags waitStages[] = {VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT};
     submitInfo.waitSemaphoreCount = 1;
     submitInfo.pWaitSemaphores = waitSemaphores;
     submitInfo.pWaitDstStageMask = waitStages;
@@ -918,8 +904,7 @@ void ShadeApplication::renderPresent()
     submitInfo.signalSemaphoreCount = 1;
     submitInfo.pSignalSemaphores = signalSemaphores;
 
-    if (vkQueueSubmit(vulkanData.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) !=
-        VK_SUCCESS)
+    if (vkQueueSubmit(vulkanData.graphicsQueue, 1, &submitInfo, VK_NULL_HANDLE) != VK_SUCCESS)
     {
         throw std::runtime_error("Shade: Failed to submit draw command buffer!");
     }
@@ -944,10 +929,7 @@ void ShadeApplication::renderPresent()
     vkQueueWaitIdle(vulkanData.presentQueue);
 }
 
-void ShadeApplication::setRenderClearColour(Colour c)
-{
-    this->info.clearColour = c;
-}
+void ShadeApplication::setRenderClearColour(Colour c) { this->info.clearColour = c; }
 
 void ShadeApplication::setWindowSize(Rect windowSize)
 {
@@ -958,10 +940,7 @@ void ShadeApplication::setWindowSize(Rect windowSize)
     }
 }
 
-Rect ShadeApplication::getWindowSize()
-{
-    return this->info.windowSize;
-}
+Rect ShadeApplication::getWindowSize() { return this->info.windowSize; }
 
 void ShadeApplication::setWindowTitle(std::string windowTitle)
 {
@@ -970,10 +949,7 @@ void ShadeApplication::setWindowTitle(std::string windowTitle)
     glfwSetWindowTitle(window, windowTitle.c_str());
 }
 
-std::string ShadeApplication::getWindowTitle()
-{
-    return this->info.windowTitle;
-}
+std::string ShadeApplication::getWindowTitle() { return this->info.windowTitle; }
 
 void ShadeApplication::setMouseLock(bool mouseLock)
 {
@@ -989,49 +965,46 @@ void ShadeApplication::setMouseLock(bool mouseLock)
     }
 }
 
-bool ShadeApplication::getMouseLock()
-{
-    return this->info.mouseLock;
-}
+bool ShadeApplication::getMouseLock() { return this->info.mouseLock; }
 
 void ShadeApplication::renderMesh(Mesh *mesh, Material *material)
 {
     renderTriangles(mesh->getVertexBuffer(), mesh->getIndexBuffer(), material);
 }
 
-void ShadeApplication::renderTriangles(VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, Material *material, int indexBufferOffset)
+void ShadeApplication::renderTriangles(VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer,
+                                       Material *material, int indexBufferOffset)
 {
     // Bind shader graphics pipeline
     vkCmdBindPipeline(vulkanData.commandBuffers[vulkanData.currentImageIndex],
-                      VK_PIPELINE_BIND_POINT_GRAPHICS, material->getShader()->_getGraphicsPipeline());
+                      VK_PIPELINE_BIND_POINT_GRAPHICS,
+                      material->getShader()->_getGraphicsPipeline());
 
-    vkCmdBindIndexBuffer(vulkanData.commandBuffers[vulkanData.currentImageIndex], indexBuffer->_getVkBuffer(), indexBufferOffset, VK_INDEX_TYPE_UINT32);
+    vkCmdBindIndexBuffer(vulkanData.commandBuffers[vulkanData.currentImageIndex],
+                         indexBuffer->_getVkBuffer(), indexBufferOffset, VK_INDEX_TYPE_UINT32);
 
     VkBuffer vertexBuffers[] = {vertexBuffer->_getVkBuffer()};
     VkDeviceSize vertexBufferOffsets[] = {0};
-    vkCmdBindVertexBuffers(vulkanData.commandBuffers[vulkanData.currentImageIndex], 0, 1, vertexBuffers, vertexBufferOffsets);
+    vkCmdBindVertexBuffers(vulkanData.commandBuffers[vulkanData.currentImageIndex], 0, 1,
+                           vertexBuffers, vertexBufferOffsets);
 
     VkDescriptorSet descriptorSet = material->_getDescriptorSet();
 
     // Get dynamic uniform offsets
     std::vector<uint32_t> dynamicUniformOffsets = material->_getVkDynamicUniformOffsets();
 
-    vkCmdBindDescriptorSets(vulkanData.commandBuffers[vulkanData.currentImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
-                            material->getShader()->_getGraphicsPipelineLayout(),
-                            0, 1, &descriptorSet, dynamicUniformOffsets.size(), dynamicUniformOffsets.data());
+    vkCmdBindDescriptorSets(
+        vulkanData.commandBuffers[vulkanData.currentImageIndex], VK_PIPELINE_BIND_POINT_GRAPHICS,
+        material->getShader()->_getGraphicsPipelineLayout(), 0, 1, &descriptorSet,
+        dynamicUniformOffsets.size(), dynamicUniformOffsets.data());
 
-    vkCmdDrawIndexed(vulkanData.commandBuffers[vulkanData.currentImageIndex], indexBuffer->getElementCount(), 1, 0, 0, 0);
+    vkCmdDrawIndexed(vulkanData.commandBuffers[vulkanData.currentImageIndex],
+                     indexBuffer->getElementCount(), 1, 0, 0, 0);
 }
 
-ShadeApplicationInfo *ShadeApplication::_getApplicationInfo()
-{
-    return &this->info;
-}
+ShadeApplicationInfo *ShadeApplication::_getApplicationInfo() { return &this->info; }
 
-void ShadeApplication::_registerShader(Shader *shader)
-{
-    shaderRegistry.push_back(shader);
-}
+void ShadeApplication::_registerShader(Shader *shader) { shaderRegistry.push_back(shader); }
 
 void ShadeApplication::_unregisterShader(Shader *shader)
 {
@@ -1048,20 +1021,14 @@ void ShadeApplication::_unregisterShader(Shader *shader)
     throw std::runtime_error("Shade: Failed to unregister shader!");
 }
 
-std::vector<Shader *> ShadeApplication::_getShaders()
-{
-    return this->shaderRegistry;
-}
+std::vector<Shader *> ShadeApplication::_getShaders() { return this->shaderRegistry; }
 
 bool ShadeApplication::getKeyPressed(Key key)
 {
     return (glfwGetKey(window, (int)key) != GLFW_RELEASE);
 }
 
-bool ShadeApplication::getKeyReleased(Key key)
-{
-    return !getKeyPressed(key);
-}
+bool ShadeApplication::getKeyReleased(Key key) { return !getKeyPressed(key); }
 
 void ShadeApplication::updateMouseData()
 {
@@ -1095,25 +1062,13 @@ void ShadeApplication::updateMouseData()
         (glfwGetMouseButton(window, GLFW_MOUSE_BUTTON_RIGHT) == GLFW_PRESS);
 }
 
-Mouse ShadeApplication::getMouse()
-{
-    return this->mouseData;
-}
+Mouse ShadeApplication::getMouse() { return this->mouseData; }
 
-GLFWwindow *ShadeApplication::_getGLFWWindow()
-{
-    return this->window;
-}
+GLFWwindow *ShadeApplication::_getGLFWWindow() { return this->window; }
 
-float ShadeApplication::getFixedDeltaTime()
-{
-    return fixedDeltaTime;
-}
+float ShadeApplication::getFixedDeltaTime() { return fixedDeltaTime; }
 
-float ShadeApplication::getTimeSinceStartup()
-{
-    return glfwGetTime();
-}
+float ShadeApplication::getTimeSinceStartup() { return glfwGetTime(); }
 
 void ShadeApplication::updateFrameData()
 {

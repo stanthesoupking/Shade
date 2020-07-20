@@ -77,6 +77,7 @@ void Buffer::setData(void *data, uint32_t count, uint32_t offset)
         freeBuffer();
 
         size = count;
+        totalBufferSize = size * stride;
 
         // Set new data
         createBuffer(data);

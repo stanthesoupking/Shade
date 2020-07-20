@@ -7,18 +7,18 @@
 
 #include <vulkan/vulkan.h>
 
-#include <vector>
 #include <optional>
+#include <vector>
 
-#include "./VulkanApplication.hpp"
 #include "./Buffer.hpp"
-#include "./IndexBuffer.hpp"
-#include "./VertexBuffer.hpp"
-#include "./Rect.hpp"
 #include "./Colour.hpp"
-#include "./Shader.hpp"
+#include "./IndexBuffer.hpp"
 #include "./Mesh.hpp"
+#include "./Rect.hpp"
 #include "./Shade.hpp"
+#include "./Shader.hpp"
+#include "./VertexBuffer.hpp"
+#include "./VulkanApplication.hpp"
 
 namespace Shade
 {
@@ -132,7 +132,7 @@ struct ShadeApplicationInfo
 {
     std::string windowTitle = "Shade Application";
     Rect windowSize = {0, 0, 640, 480};
-	bool windowResizable = true;
+    bool windowResizable = true;
     bool windowFullscreen = false;
     bool mouseLock = false;
     Colour clearColour = {0, 0, 0, 1};
@@ -143,10 +143,7 @@ struct QueueFamilyIndices
     std::optional<uint32_t> graphicsQueue;
     std::optional<uint32_t> presentQueue;
 
-    bool isComplete()
-    {
-        return graphicsQueue.has_value() && presentQueue.has_value();
-    }
+    bool isComplete() { return graphicsQueue.has_value() && presentQueue.has_value(); }
 };
 
 struct SwapChainSupportDetails
@@ -156,7 +153,7 @@ struct SwapChainSupportDetails
     std::vector<VkPresentModeKHR> presentModes;
 };
 
-class ShadeApplication: public VulkanApplication
+class ShadeApplication : public VulkanApplication
 {
 private:
     ShadeApplicationInfo info;
@@ -166,11 +163,9 @@ private:
     Mouse mouseData;
     Mouse previousMouseData;
 
-    const std::vector<const char *> validationLayers = {
-         "VK_LAYER_KHRONOS_validation"};
+    const std::vector<const char *> validationLayers = {"VK_LAYER_KHRONOS_validation"};
 
-    const std::vector<const char *> deviceExtensions = {
-        VK_KHR_SWAPCHAIN_EXTENSION_NAME};
+    const std::vector<const char *> deviceExtensions = {VK_KHR_SWAPCHAIN_EXTENSION_NAME};
 
     void initSystem();
     void initWindow();
@@ -188,10 +183,10 @@ private:
     void createAllocator();
     void createSwapchain();
     VkExtent2D getOptimalSwapExtent(const VkSurfaceCapabilitiesKHR &capabilities);
-    VkPresentModeKHR getOptimalSwapPresentMode(
-        const std::vector<VkPresentModeKHR> &availablePresentModes);
-    VkSurfaceFormatKHR getOptimalSwapSurfaceFormat(
-        const std::vector<VkSurfaceFormatKHR> &availableFormats);
+    VkPresentModeKHR
+    getOptimalSwapPresentMode(const std::vector<VkPresentModeKHR> &availablePresentModes);
+    VkSurfaceFormatKHR
+    getOptimalSwapSurfaceFormat(const std::vector<VkSurfaceFormatKHR> &availableFormats);
     void createImageViews();
     void createRenderPass();
     void createFramebuffers();
@@ -201,9 +196,9 @@ private:
     void createDescriptorPool();
     void createDepthResources();
 
-	static void framebufferResizeCallback(GLFWwindow* window, int width, int height);
-	void recreateSwapchain();
-	void cleanupSwapchain();
+    static void framebufferResizeCallback(GLFWwindow *window, int width, int height);
+    void recreateSwapchain();
+    void cleanupSwapchain();
     void cleanupDepthResources();
 
     void updateFrameData();
@@ -215,19 +210,24 @@ private:
 
     bool running;
 
-    float prevTime = 0; // Keep track of application time for calculating delta time
+    float prevTime = 0;       // Keep track of application time for calculating delta time
     float fixedDeltaTime = 0; // Delta time (seconds) since last frame
 
-	/**
-	 * Keep track of loaded shaders for updating on window resize events.
-	 */
-	std::vector<Shader*> shaderRegistry;
+    /**
+     * Keep track of loaded shaders for updating on window resize events.
+     */
+    std::vector<Shader *> shaderRegistry;
+
 public:
+    // Command line arguments
+    int argc;
+    char **argv;
+
     ShadeApplication();
     ~ShadeApplication();
 
     // Start the application and enter main loop
-    void start();
+    void start(int argc, char **argv);
 
     // Exit the application
     void exit();
@@ -240,9 +240,9 @@ public:
     virtual void destroy() = 0;
 
     void setRenderClearColour(Colour c);
-	
-	void setWindowSize(Rect windowSize);
-	Rect getWindowSize();
+
+    void setWindowSize(Rect windowSize);
+    Rect getWindowSize();
 
     void setWindowTitle(std::string windowTitle);
     std::string getWindowTitle();
@@ -250,30 +250,30 @@ public:
     void setMouseLock(bool mouseLock);
     bool getMouseLock();
 
-    void renderMesh(Mesh* mesh, Material *material);
-    void renderTriangles(VertexBuffer* vertexBuffer, IndexBuffer* indexBuffer, Material *material, int indexBufferOffset = 0);
+    void renderMesh(Mesh *mesh, Material *material);
+    void renderTriangles(VertexBuffer *vertexBuffer, IndexBuffer *indexBuffer, Material *material,
+                         int indexBufferOffset = 0);
 
-	ShadeApplicationInfo* _getApplicationInfo();
-	void _registerShader(Shader* shader);
-	void _unregisterShader(Shader* shader);
-	std::vector<Shader*> _getShaders();
+    ShadeApplicationInfo *_getApplicationInfo();
+    void _registerShader(Shader *shader);
+    void _unregisterShader(Shader *shader);
+    std::vector<Shader *> _getShaders();
 
     /**
      * Get the delta time (seconds) since the previous update.
      */
-    float getFixedDeltaTime(); 
-    
+    float getFixedDeltaTime();
+
     /**
      * Get total time (seconds) since application startup
      */
-    float getTimeSinceStartup(); 
+    float getTimeSinceStartup();
 
     bool getKeyPressed(Key key);
     bool getKeyReleased(Key key);
 
     Mouse getMouse();
 
-    GLFWwindow* _getGLFWWindow();
-
+    GLFWwindow *_getGLFWWindow();
 };
 } // namespace Shade
